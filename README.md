@@ -1,66 +1,172 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Multi-Store Inventory Dashboard
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+<img src="https://img.shields.io/badge/Laravel-10.x-red" alt="Laravel Version">
+<img src="https://img.shields.io/badge/PHP-8.1+-blue" alt="PHP Version">
+<img src="https://img.shields.io/badge/React-18.x-blue" alt="React Version">
+<img src="https://img.shields.io/badge/Inertia.js-1.x-purple" alt="Inertia.js Version">
+<img src="https://img.shields.io/badge/License-MIT-green" alt="License">
 </p>
 
-## About Laravel
+## About Multi-Store Inventory Dashboard
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Multi-Store Inventory Dashboard is a comprehensive solution for managing product inventory across multiple e-commerce platforms like Shopify, Etsy, and Amazon. The application provides real-time synchronization, stock alerts, and a unified dashboard to monitor your entire inventory ecosystem.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Key Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### API Integrations
+- **Shopify Integration**: Complete integration with Shopify Admin API for product synchronization and inventory management
+- **Etsy Integration**: Integration with Etsy Open API for listings management and inventory updates
+- **Amazon Integration**: Connection to Amazon SP-API for product catalog and inventory management
 
-## Learning Laravel
+### Inventory Management
+- **Cross-Platform Synchronization**: Keep inventory levels synchronized across all your e-commerce platforms
+- **Individual Product Management**: View and update product details across all connected stores
+- **Batch Operations**: Perform bulk updates and synchronization across multiple products
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Real-time Notifications
+- **Stock Alerts**: Receive instant notifications when product stock levels fall below specified thresholds
+- **Sync Notifications**: Get updates when synchronization operations complete
+- **Custom Threshold Settings**: Set individual stock thresholds for each product
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Dashboard & Reporting
+- **Unified Dashboard**: View all your inventory data in one place
+- **Platform Metrics**: See performance and stock levels broken down by platform
+- **Visual Data Representation**: Charts and graphs to visualize inventory status
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Technology Stack
 
-## Laravel Sponsors
+- **Backend**: Laravel 10.x with PHP 8.1+
+- **Frontend**: React 18.x with Inertia.js
+- **Styling**: TailwindCSS
+- **Real-time**: Laravel Echo with Pusher for real-time notifications
+- **Authentication**: Laravel Breeze with Spatie Permissions for role management
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Installation
 
-### Premium Partners
+### Requirements
+- PHP 8.1 or higher
+- Node.js and NPM
+- Composer
+- MySQL or compatible database
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+### Setup Steps
 
-## Contributing
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/skanderbenali/Multi-Store-Inventory-Dashboard.git
+   cd Multi-Store-Inventory-Dashboard
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
 
-## Code of Conduct
+3. **Set up environment file**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+4. **Configure database connection in .env file**
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=your_database_name
+   DB_USERNAME=your_database_username
+   DB_PASSWORD=your_database_password
+   ```
 
-## Security Vulnerabilities
+5. **Set up Pusher for real-time notifications**
+   ```
+   BROADCAST_DRIVER=pusher
+   PUSHER_APP_ID=your_pusher_app_id
+   PUSHER_APP_KEY=your_pusher_key
+   PUSHER_APP_SECRET=your_pusher_secret
+   PUSHER_APP_CLUSTER=your_pusher_cluster
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+6. **Configure API credentials for your e-commerce platforms**
+   ```
+   SHOPIFY_API_KEY=your_shopify_api_key
+   SHOPIFY_API_SECRET=your_shopify_api_secret
+   
+   ETSY_API_KEY=your_etsy_api_key
+   ETSY_API_SECRET=your_etsy_api_secret
+   
+   AMAZON_CLIENT_ID=your_amazon_client_id
+   AMAZON_CLIENT_SECRET=your_amazon_client_secret
+   ```
+
+7. **Run migrations**
+   ```bash
+   php artisan migrate
+   ```
+
+8. **Install NPM dependencies and build assets**
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+9. **Start the local development server**
+   ```bash
+   php artisan serve
+   ```
+
+## Usage
+
+### Setting Up Store Integrations
+1. Navigate to the Store Integrations page
+2. Click "Add New Integration"
+3. Select the platform (Shopify, Etsy, or Amazon)
+4. Provide necessary API credentials
+5. Complete the OAuth flow if required
+
+### Managing Products
+1. Products will be automatically synced from your connected stores
+2. View all products on the Products page
+3. Click on a product to view detailed information
+4. Use the "Sync" button to manually update inventory for specific products
+
+### Setting Up Stock Alerts
+1. Navigate to a product's detail page
+2. Click "Add Stock Alert"
+3. Set the threshold quantity
+4. Save the alert
+
+### Dashboard
+- The dashboard provides an overview of your entire inventory ecosystem
+- View recent synchronization activities
+- Monitor stock alerts
+- See platform-specific metrics
+
+## Schedule Configuration
+
+The application includes scheduled tasks for regular inventory synchronization and stock alert checking. These are configured in the `app/Console/Kernel.php` file:
+
+```php
+protected function schedule(Schedule $schedule)
+{
+    $schedule->command('inventory:sync-all-stores')->hourly();
+    $schedule->command('inventory:check-stock-alerts')->everyThirtyMinutes();
+}
+```
+
+Make sure to set up a cron job to run the scheduler:
+
+```bash
+* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+```
+
+## Documentation
+
+Additional documentation is available in the `docs` directory:
+
+- [Notifications System](docs/NOTIFICATIONS.md): Details about the real-time notification system
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The Multi-Store Inventory Dashboard is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
