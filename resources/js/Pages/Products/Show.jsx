@@ -4,6 +4,29 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Transition } from '@headlessui/react';
 
 export default function Show({ auth, product, flash, can }) {
+    // Debug: Log the product object to console
+    console.log('Product data:', product);
+    console.log('Product JSON:', JSON.stringify(product, null, 2));
+    
+    // Parse images from JSON string if needed
+    const parseImages = () => {
+        if (!product.images) return [];
+        
+        try {
+            // Check if it's already an array
+            if (Array.isArray(product.images)) return product.images;
+            
+            // Try to parse from JSON string
+            return JSON.parse(product.images);
+        } catch (e) {
+            console.error('Error parsing images:', e);
+            return [];
+        }
+    };
+    
+    const productImages = parseImages();
+    const mainImage = productImages.length > 0 ? productImages[0] : null;
+    
     const [showSuccessMessage, setShowSuccessMessage] = useState(!!flash?.success);
     const [isSyncing, setIsSyncing] = useState(false);
     
@@ -166,9 +189,9 @@ export default function Show({ auth, product, flash, can }) {
                             {/* Product Image */}
                             <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                                 <div className="p-6">
-                                    {product.image_url ? (
+                                    {mainImage ? (
                                         <img 
-                                            src={product.image_url} 
+                                            src={mainImage} 
                                             alt={product.title} 
                                             className="w-full h-64 object-contain rounded-md"
                                         />
@@ -191,37 +214,50 @@ export default function Show({ auth, product, flash, can }) {
                                         <div>
                                             <span className="text-sm font-medium text-gray-500">Store</span>
                                             <div className="mt-1 flex items-center">
-                                                <span className="text-2xl mr-2">{getPlatformIcon(product.storeIntegration?.platform)}</span>
-                                                <span className="text-gray-900">{product.storeIntegration?.name || 'Unknown'}</span>
+                                                <span className="text-2xl mr-2">{getPlatformIcon(product.store_integration?.platform)}</span>
+                                                <span className="text-gray-900">{product.store_integration?.name || 'Unknown'}</span>
                                             </div>
                                         </div>
                                         
                                         <div>
                                             <span className="text-sm font-medium text-gray-500">Platform</span>
-                                            <p className="mt-1 text-gray-900 capitalize">{product.storeIntegration?.platform || 'Unknown'}</p>
+                                            <p className="mt-1 text-gray-900 capitalize">{product.store_integration?.platform || 'Unknown'}</p>
                                         </div>
                                         
                                         <div>
                                             <span className="text-sm font-medium text-gray-500">Store URL</span>
-                                            <p className="mt-1 text-gray-900">{product.storeIntegration?.shop_url || 'N/A'}</p>
-                                        </div>
-                                        
-                                        <div>
-                                            <span className="text-sm font-medium text-gray-500">External Product ID</span>
-                                            <p className="mt-1 text-gray-900 font-mono text-sm">{product.external_id || 'N/A'}</p>
-                                        </div>
-                                        
-                                        <div>
-                                            <span className="text-sm font-medium text-gray-500">Product URL</span>
-                                            {product.product_url ? (
+                                            {product.store_integration?.shop_url ? (
                                                 <p className="mt-1">
                                                     <a 
-                                                        href={product.product_url} 
+                                                        href={`https://${product.store_integration.shop_url}`} 
                                                         target="_blank" 
                                                         rel="noopener noreferrer"
                                                         className="text-indigo-600 hover:text-indigo-900"
                                                     >
-                                                        View on {product.storeIntegration?.platform || 'Store'} →
+                                                        {product.store_integration.shop_url} →
+                                                    </a>
+                                                </p>
+                                            ) : (
+                                                <p className="mt-1 text-gray-500">N/A</p>
+                                            )}
+                                        </div>
+                                        
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-500">SKU</span>
+                                            <p className="mt-1 text-gray-900 font-mono text-sm">{product.sku || 'N/A'}</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-500">Product URL</span>
+                                            {product.store_integration?.shop_url && product.platform_product_id ? (
+                                                <p className="mt-1">
+                                                    <a 
+                                                        href={`https://${product.store_integration.shop_url}/products/${product.platform_product_id}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        View on {product.store_integration?.platform || 'Store'} →
                                                     </a>
                                                 </p>
                                             ) : (
@@ -287,9 +323,19 @@ export default function Show({ auth, product, flash, can }) {
                                         <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.title}</h1>
                                         
                                         <div className="flex flex-wrap items-center gap-3 mt-4">
+                                            {product.price && (
+                                                <div className="flex items-center">
+                                                    <span className="text-sm text-gray-600 mr-2">Price:</span>
+                                                    <span className="font-medium">${product.price}</span>
+                                                </div>
+                                            )}
+                                            
                                             <div className="flex items-center">
-                                                <span className="text-sm text-gray-600 mr-2">SKU:</span>
-                                                <span className="font-medium">{product.sku || 'N/A'}</span>
+                                                <span className="text-sm text-gray-600 mr-2">Stock:</span>
+                                                <span className={`font-medium ${product.quantity <= 0 ? 'text-red-600' : (product.quantity <= product.low_stock_threshold ? 'text-yellow-600' : 'text-green-600')}`}>
+                                                    {product.quantity} units
+                                                </span>
+                                                <span className="text-xs text-gray-500 ml-1">(Threshold: {product.low_stock_threshold})</span>
                                             </div>
                                             
                                             <div className="flex items-center">
@@ -330,47 +376,47 @@ export default function Show({ auth, product, flash, can }) {
                                         </div>
                                     </div>
                                     
-                                    {/* Price Information (if available) */}
-                                    {(product.price !== null || product.compare_at_price !== null) && (
+                                    {/* Price Information (always displayed) */}
+                                    {(
                                         <div className="mb-6">
                                             <h3 className="text-lg font-medium text-gray-900 mb-4">Pricing</h3>
                                             
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                {product.price !== null && (
-                                                    <div className="p-4 rounded-md border border-gray-300 bg-gray-50">
-                                                        <h4 className="text-sm font-medium mb-1">Price</h4>
-                                                        <p className="text-2xl font-bold">
-                                                            {typeof product.price === 'number' 
+                                                <div className="p-4 rounded-md border border-gray-300 bg-gray-50">
+                                                    <h4 className="text-sm font-medium mb-1">Price</h4>
+                                                    <p className="text-2xl font-bold">
+                                                        {product.price !== null && product.price !== undefined
+                                                            ? (typeof product.price === 'number' 
                                                                 ? new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(product.price)
-                                                                : product.price
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                )}
+                                                                : `$${product.price}`)
+                                                            : <span className="text-gray-500 text-lg font-normal italic">Not assigned yet</span>
+                                                        }
+                                                    </p>
+                                                </div>
                                                 
-                                                {product.compare_at_price !== null && (
-                                                    <div className="p-4 rounded-md border border-gray-300 bg-gray-50">
-                                                        <h4 className="text-sm font-medium mb-1">Compare at Price</h4>
-                                                        <p className="text-2xl font-bold">
-                                                            {typeof product.compare_at_price === 'number' 
+                                                <div className="p-4 rounded-md border border-gray-300 bg-gray-50">
+                                                    <h4 className="text-sm font-medium mb-1">Compare at Price</h4>
+                                                    <p className="text-2xl font-bold">
+                                                        {product.compare_at_price !== null && product.compare_at_price !== undefined
+                                                            ? (typeof product.compare_at_price === 'number' 
                                                                 ? new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(product.compare_at_price)
-                                                                : product.compare_at_price
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                )}
+                                                                : `$${product.compare_at_price}`)
+                                                            : <span className="text-gray-500 text-lg font-normal italic">Not assigned yet</span>
+                                                        }
+                                                    </p>
+                                                </div>
                                                 
-                                                {product.cost !== null && (
-                                                    <div className="p-4 rounded-md border border-gray-300 bg-gray-50">
-                                                        <h4 className="text-sm font-medium mb-1">Cost</h4>
-                                                        <p className="text-2xl font-bold">
-                                                            {typeof product.cost === 'number' 
+                                                <div className="p-4 rounded-md border border-gray-300 bg-gray-50">
+                                                    <h4 className="text-sm font-medium mb-1">Cost</h4>
+                                                    <p className="text-2xl font-bold">
+                                                        {product.cost !== null && product.cost !== undefined
+                                                            ? (typeof product.cost === 'number' 
                                                                 ? new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(product.cost)
-                                                                : product.cost
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                )}
+                                                                : `$${product.cost}`)
+                                                            : <span className="text-gray-500 text-lg font-normal italic">Not assigned yet</span>
+                                                        }
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -379,7 +425,7 @@ export default function Show({ auth, product, flash, can }) {
                                     <div className="mb-6">
                                         <h3 className="text-lg font-medium text-gray-900 mb-4">Description</h3>
                                         
-                                        {product.description ? (
+                                        {product.description && product.description.trim() !== '' ? (
                                             <div className="prose max-w-none">
                                                 {product.description}
                                             </div>

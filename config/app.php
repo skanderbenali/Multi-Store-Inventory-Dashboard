@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Facade;
 return [
 
     
-    'name' => env('APP_NAME', 'MultiStore'),
+    'name' => env('APP_NAME', 'Texporta'),
 
     
 

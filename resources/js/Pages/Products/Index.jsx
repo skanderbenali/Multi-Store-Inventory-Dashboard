@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Transition } from '@headlessui/react';
@@ -16,6 +16,25 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
     });
     const [debouncedSearch, setDebouncedSearch] = useState(searchParams.search);
     
+    // Helper function to parse images JSON string
+    const parseProductImage = (product) => {
+        if (!product.images) return null;
+        
+        try {
+            // Check if it's already an array
+            if (Array.isArray(product.images)) {
+                return product.images.length > 0 ? product.images[0] : null;
+            }
+            
+            // Try to parse from JSON string
+            const imagesArray = JSON.parse(product.images);
+            return imagesArray.length > 0 ? imagesArray[0] : null;
+        } catch (e) {
+            console.error('Error parsing images for product:', product.id, e);
+            return null;
+        }
+    };
+    
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchParams.search);
@@ -24,16 +43,45 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
         return () => clearTimeout(timer);
     }, [searchParams.search]);
     
+    // Use a ref to track the last applied filters to prevent infinite loops
+    const lastAppliedFilters = React.useRef({
+        search: filters?.search || '',
+        store: filters?.store || '',
+        status: filters?.status || '',
+        sort: filters?.sort || 'newest',
+    });
+    
     useEffect(() => {
-        if (
-            debouncedSearch !== filters?.search || 
-            searchParams.store !== filters?.store || 
-            searchParams.status !== filters?.status || 
-            searchParams.sort !== filters?.sort
-        ) {
+        // Only apply filters if they've actually changed from what was last applied
+        const currentFilters = {
+            search: debouncedSearch,
+            store: searchParams.store,
+            status: searchParams.status,
+            sort: searchParams.sort
+        };
+        
+        const lastFilters = lastAppliedFilters.current;
+        
+        // Check if any filter has changed from what was last applied
+        const hasChanged = 
+            currentFilters.search !== lastFilters.search ||
+            currentFilters.store !== lastFilters.store ||
+            currentFilters.status !== lastFilters.status ||
+            currentFilters.sort !== lastFilters.sort;
+            
+        // Check if any filter is different from what's in the URL
+        const isDifferentFromUrl = 
+            currentFilters.search !== filters?.search ||
+            currentFilters.store !== filters?.store ||
+            currentFilters.status !== filters?.status ||
+            currentFilters.sort !== filters?.sort;
+        
+        if (hasChanged && isDifferentFromUrl) {
+            // Update the ref before applying filters
+            lastAppliedFilters.current = {...currentFilters};
             applyFilters();
         }
-    }, [debouncedSearch, searchParams.store, searchParams.status, searchParams.sort]);
+    }, [debouncedSearch, searchParams.store, searchParams.status, searchParams.sort, filters]);
     
     const applyFilters = () => {
         const params = new URLSearchParams();
@@ -47,7 +95,13 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
     };
     
     const getStockStatus = (product) => {
-        if (product.quantity <= 0) {
+        if (product.quantity === null || product.quantity === undefined) {
+            return (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    Unknown
+                </span>
+            );
+        } else if (product.quantity <= 0) {
             return (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                     Out of Stock
@@ -160,7 +214,7 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                                         className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                     >
                                         <option value="">All Stores</option>
-                                        {stores.map((store) => (
+                                        {stores && stores.length > 0 && stores.map((store) => (
                                             <option key={store.id} value={store.id}>
                                                 {store.name}
                                             </option>
@@ -217,7 +271,7 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                     </div>
                     
                     {/* Products Table */}
-                    {products.data.length === 0 ? (
+                    {!products?.data || products.data.length === 0 ? (
                         <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div className="p-10 text-center">
                                 <h3 className="text-xl font-medium text-gray-600 mb-4">No products found</h3>
@@ -243,38 +297,38 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                     ) : (
                         <>
                             <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
+                                <div className="overflow-hidden">
+                                    <table className="w-full table-fixed divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-4/12">
                                                     Product
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
                                                     Store
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">
                                                     SKU
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
                                                     Stock
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
                                                     Last Updated
                                                 </th>
-                                                <th scope="col" className="relative px-6 py-3">
+                                                <th scope="col" className="relative px-6 py-3 w-1/12">
                                                     <span className="sr-only">Actions</span>
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {products.data.map((product) => (
+                                            {products?.data && products.data.map((product) => (
                                                 <tr key={product.id}>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center">
-                                                            {product.image_url ? (
+                                                            {parseProductImage(product) ? (
                                                                 <div className="flex-shrink-0 h-10 w-10">
-                                                                    <img className="h-10 w-10 rounded-md object-cover" src={product.image_url} alt={product.title} />
+                                                                    <img className="h-10 w-10 rounded-md object-cover" src={parseProductImage(product)} alt={product.title} />
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
@@ -284,8 +338,10 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                                                                 </div>
                                                             )}
                                                             <div className="ml-4">
-                                                                <div className="text-sm font-medium text-gray-900">{product.title}</div>
-                                                                <div className="text-sm text-gray-500 truncate max-w-xs">
+                                                                <div className="text-sm font-medium text-gray-900 truncate" style={{ maxWidth: '250px' }} title={product.title}>
+                                                                    {product.title.length > 40 ? product.title.substring(0, 40) + '...' : product.title}
+                                                                </div>
+                                                                <div className="text-sm text-gray-500 truncate" style={{ maxWidth: '250px' }}>
                                                                     {product.description ? (
                                                                         product.description.length > 50 
                                                                             ? product.description.substring(0, 50) + '...'
@@ -297,8 +353,8 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center">
-                                                            <span className="text-lg mr-2">{getPlatformIcon(product.storeIntegration?.platform)}</span>
-                                                            <div className="text-sm text-gray-900">{product.storeIntegration?.name || 'Unknown'}</div>
+                                                            <span className="text-lg mr-2">{getPlatformIcon(product.store_integration?.platform)}</span>
+                                                            <div className="text-sm text-gray-900">{product.store_integration?.name || 'Unknown'}</div>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -339,7 +395,7 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                             </div>
                             
                             {/* Pagination */}
-                            <Pagination links={products.links} />
+                            {products?.links && <Pagination links={products.links} />}
                         </>
                     )}
                 </div>

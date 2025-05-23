@@ -6,7 +6,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title inertia>{{ config('app.name', 'Multi-Store Inventory Dashboard') }}</title>
+        <title inertia>{{ config('app.name', 'Texporta') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -17,6 +17,9 @@
         @viteReactRefresh
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead
+        
+        <!-- React DevTools temporarily disabled -->
+        <!-- <script src="http://localhost:8097"></script> -->
     </head>
     <body class="font-sans antialiased">
         @inertia
