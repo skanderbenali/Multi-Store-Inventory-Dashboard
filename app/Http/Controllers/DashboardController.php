@@ -13,33 +13,20 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display the dashboard with key metrics and data.
-     *
-     * @param  \App\Services\InventorySyncService  $syncService
-     * @return \Inertia\Response
-     */
+    
     public function index(InventorySyncService $syncService)
     {
         $this->authorize('view dashboard');
-        
-        // Get integrations the user has access to
         $integrationIds = Auth::user()->hasRole('admin')
             ? StoreIntegration::pluck('id')
             : Auth::user()->storeIntegrations()->pluck('id');
-            
-        // Get store integrations for the dashboard
         $storeIntegrations = StoreIntegration::whereIn('id', $integrationIds)
             ->with('user:id,name')
             ->withCount('products')
             ->latest('last_sync_at')
             ->take(6)
             ->get();
-            
-        // Get product metrics
         $productMetrics = $this->getProductMetrics($integrationIds);
-        
-        // Get recent stock alerts
         $recentAlerts = StockAlert::whereHas('product', function($query) use ($integrationIds) {
                 $query->whereIn('store_integration_id', $integrationIds);
             })
@@ -50,15 +37,11 @@ class DashboardController extends Controller
             ->latest()
             ->take(5)
             ->get();
-            
-        // Get recent sync logs
         $recentSyncs = InventorySyncLog::whereIn('store_integration_id', $integrationIds)
-            ->with(['storeIntegration:id,name,platform', 'product:id,title,sku,image_url'])
+            ->with(['storeIntegration:id,name,platform', 'product:id,title,sku,images'])
             ->latest()
             ->take(5)
             ->get();
-            
-        // Get sync recommendations if user can sync products
         $syncRecommendations = [];
         if (Auth::user()->can('sync products')) {
             $syncRecommendations = $syncService->getSyncRecommendations();
@@ -85,17 +68,12 @@ class DashboardController extends Controller
         ]);
     }
     
-    /**
-     * Get product metrics for the dashboard.
-     *
-     * @param  \Illuminate\Support\Collection  $integrationIds
-     * @return array
-     */
+    
     private function getProductMetrics($integrationIds)
     {
         $totalProducts = Product::whereIn('store_integration_id', $integrationIds)->count();
         
-        $lowStockThreshold = 5; // Default threshold
+        $lowStockThreshold = 5; 
         
         $inStockCount = Product::whereIn('store_integration_id', $integrationIds)
             ->where('quantity', '>', $lowStockThreshold)
@@ -118,3 +96,4 @@ class DashboardController extends Controller
         ];
     }
 }
+

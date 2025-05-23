@@ -13,22 +13,17 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
+    
     public function create(): Response
     {
         return Inertia::render('Auth/Register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
+    
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -42,6 +37,9 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+        
+        
+        $user->assignRole('store manager');
 
         event(new Registered($user));
 
@@ -50,3 +48,4 @@ class RegisteredUserController extends Controller
         return redirect(RouteServiceProvider::HOME);
     }
 }
+

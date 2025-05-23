@@ -20,46 +20,34 @@ abstract class ApiService
         $this->initializeService();
     }
     
-    /**
-     * Initialize the API service with store-specific configurations
-     */
+    
     abstract protected function initializeService(): void;
     
-    /**
-     * Make a GET request to the API
-     */
+    
     protected function get(string $endpoint, array $queryParams = []): array
     {
         return $this->request('GET', $endpoint, ['query' => $queryParams]);
     }
     
-    /**
-     * Make a POST request to the API
-     */
+    
     protected function post(string $endpoint, array $data = []): array
     {
         return $this->request('POST', $endpoint, ['json' => $data]);
     }
     
-    /**
-     * Make a PUT request to the API
-     */
+    
     protected function put(string $endpoint, array $data = []): array
     {
         return $this->request('PUT', $endpoint, ['json' => $data]);
     }
     
-    /**
-     * Make a DELETE request to the API
-     */
+    
     protected function delete(string $endpoint): array
     {
         return $this->request('DELETE', $endpoint);
     }
     
-    /**
-     * Make an API request with error handling and retries
-     */
+    
     protected function request(string $method, string $endpoint, array $options = []): array
     {
         $url = $this->buildUrl($endpoint);
@@ -73,15 +61,20 @@ abstract class ApiService
         while (!$success && $attempts < $this->retries) {
             try {
                 $attempts++;
+                $http = Http::timeout($this->timeout);
                 
-                $response = Http::timeout($this->timeout)
-                    ->withOptions($options)
+                // Skip SSL verification for development environments
+                if (app()->environment('local', 'development', 'testing')) {
+                    $http = $http->withoutVerifying();
+                }
+                
+                $response = $http->withOptions($options)
                     ->{strtolower($method)}($url);
                 
                 if ($response->successful()) {
                     $success = true;
                 } else {
-                    // Log the error response
+                    
                     Log::warning('API request failed', [
                         'store_integration_id' => $this->storeIntegration->id,
                         'platform' => $this->storeIntegration->platform,
@@ -100,7 +93,7 @@ abstract class ApiService
             } catch (\Exception $e) {
                 $lastException = $e;
                 
-                // Log the exception
+                
                 Log::error('API request exception', [
                     'store_integration_id' => $this->storeIntegration->id,
                     'platform' => $this->storeIntegration->platform,
@@ -146,11 +139,10 @@ abstract class ApiService
         ];
     }
     
-    /**
-     * Build the complete URL for an API request
-     */
+
     protected function buildUrl(string $endpoint): string
     {
         return rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/');
     }
 }
+

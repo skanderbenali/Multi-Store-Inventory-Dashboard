@@ -2,13 +2,11 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function StockAlertCard({ alert }) {
-    // Format date
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         return new Date(dateString).toLocaleString();
     };
     
-    // Get alert status styling
     const getAlertStatusClass = () => {
         if (!alert.is_active) {
             return 'bg-gray-100 text-gray-800';
@@ -21,7 +19,6 @@ export default function StockAlertCard({ alert }) {
         return 'bg-yellow-100 text-yellow-800';
     };
     
-    // Get alert status text
     const getAlertStatusText = () => {
         if (!alert.is_active) {
             return 'Inactive';
@@ -34,7 +31,6 @@ export default function StockAlertCard({ alert }) {
         return 'Active';
     };
     
-    // Get stock level indicator
     const getStockLevelClass = () => {
         const product = alert.product;
         

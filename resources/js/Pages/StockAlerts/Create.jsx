@@ -17,13 +17,11 @@ export default function Create({ auth, products, preselectedProduct = null }) {
     
     const [selectedProduct, setSelectedProduct] = useState(null);
     
-    // Update selected product when product_id changes
     useEffect(() => {
         if (data.product_id) {
             const product = products.find(p => p.id == data.product_id);
             setSelectedProduct(product);
             
-            // Set default threshold if product is selected and threshold is not set
             if (product && !data.threshold) {
                 // Default threshold is 70% of current quantity or 5, whichever is lower
                 const defaultThreshold = Math.min(Math.floor(product.quantity * 0.7), 5);
@@ -34,7 +32,6 @@ export default function Create({ auth, products, preselectedProduct = null }) {
         }
     }, [data.product_id, products]);
     
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('stock-alerts.store'), {

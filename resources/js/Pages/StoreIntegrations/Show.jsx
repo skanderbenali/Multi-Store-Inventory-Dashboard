@@ -7,7 +7,6 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
     const [showSuccessMessage, setShowSuccessMessage] = useState(!!flash?.success);
     const [syncInProgress, setSyncInProgress] = useState(false);
     
-    // Platform-specific styling
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -26,14 +25,12 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
         }
     };
     
-    // Format date
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         const date = new Date(dateString);
         return date.toLocaleString();
     };
     
-    // Handle manual sync
     const handleSync = () => {
         setSyncInProgress(true);
         router.post(route('store-integrations.sync', storeIntegration.id), {}, {
@@ -41,7 +38,6 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
         });
     };
     
-    // Handle delete
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this store integration? This will also remove all linked products and sync logs.')) {
             router.delete(route('store-integrations.destroy', storeIntegration.id));

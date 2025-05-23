@@ -6,7 +6,6 @@ import { Transition } from '@headlessui/react';
 export default function Index({ auth, integrations, flash, can }) {
     const [showSuccessMessage, setShowSuccessMessage] = useState(!!flash?.success);
     
-    // Platform icons and colors
     const getPlatformIcon = (platform) => {
         switch (platform.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -25,12 +24,10 @@ export default function Index({ auth, integrations, flash, can }) {
         }
     };
     
-    // Function to handle manual sync
     const handleSync = (integrationId) => {
         router.post(`/store-integrations/${integrationId}/sync`);
     };
     
-    // Function to delete integration
     const handleDelete = (integrationId) => {
         if (confirm('Are you sure you want to delete this store integration? This will also remove all linked products and sync logs.')) {
             router.delete(`/store-integrations/${integrationId}`);

@@ -42,25 +42,21 @@ export default function Edit({ auth, product, stores, can }) {
         { code: 'JPY', name: 'Japanese Yen' }
     ];
     
-    // Function to format number inputs for price display
     const formatPrice = (value) => {
         if (value === null || value === '') return '';
         return value.toString();
     };
     
-    // Function to parse number inputs for price
     const parsePrice = (value) => {
         if (value === '' || value === null) return null;
         const parsed = parseFloat(value);
         return isNaN(parsed) ? null : parsed;
     };
     
-    // Handle inventory reset confirmation
     const confirmInventoryReset = () => {
         setConfirmingInventoryReset(true);
     };
     
-    // Reset inventory
     const resetInventory = () => {
         setData('quantity', 0);
         setConfirmingInventoryReset(false);

@@ -5,13 +5,11 @@ export default function NotificationToast({ notification, onClose }) {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        // Animate in
         setTimeout(() => setIsVisible(true), 100);
         
-        // Auto-dismiss after 5 seconds
         const timer = setTimeout(() => {
             setIsVisible(false);
-            setTimeout(onClose, 300); // Allow time for animation before removing
+            setTimeout(onClose, 300); 
         }, 5000);
         
         return () => clearTimeout(timer);
@@ -62,7 +60,7 @@ export default function NotificationToast({ notification, onClose }) {
     const handleClose = (e) => {
         e.stopPropagation();
         setIsVisible(false);
-        setTimeout(onClose, 300); // Allow time for animation before removing
+        setTimeout(onClose, 300); 
     };
 
     const actionLink = getActionLink();

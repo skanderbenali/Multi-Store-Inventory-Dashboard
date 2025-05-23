@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tightenco\Ziggy\Ziggy;
+use Closure;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -14,10 +15,24 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
-
+    
     /**
-     * Determine the current asset version.
+     * Handle the incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return \Illuminate\Http\Response
      */
+    public function handle(Request $request, Closure $next)
+    {
+        // If this is a request from the browser preview, ensure Inertia headers are properly set
+        if ($request->headers->has('X-Forwarded-Host') || $request->headers->has('X-Forwarded-For')) {
+            $request->headers->set('X-Inertia', 'true');
+        }
+        
+        return parent::handle($request, $next);
+    }
+
     public function version(Request $request): string|null
     {
         return parent::version($request);

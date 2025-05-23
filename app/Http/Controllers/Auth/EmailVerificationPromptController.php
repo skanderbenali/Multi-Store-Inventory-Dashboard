@@ -11,9 +11,7 @@ use Inertia\Response;
 
 class EmailVerificationPromptController extends Controller
 {
-    /**
-     * Display the email verification prompt.
-     */
+   
     public function __invoke(Request $request): RedirectResponse|Response
     {
         return $request->user()->hasVerifiedEmail()
@@ -21,3 +19,4 @@ class EmailVerificationPromptController extends Controller
                     : Inertia::render('Auth/VerifyEmail', ['status' => session('status')]);
     }
 }
+

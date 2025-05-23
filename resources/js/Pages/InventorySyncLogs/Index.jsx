@@ -17,7 +17,6 @@ export default function Index({ auth, syncLogs, stores, products, can, filters, 
     });
     const [debouncedSearch, setDebouncedSearch] = useState(searchParams.search);
     
-    // Debounce search input
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchParams.search);
@@ -26,7 +25,6 @@ export default function Index({ auth, syncLogs, stores, products, can, filters, 
         return () => clearTimeout(timer);
     }, [searchParams.search]);
     
-    // Apply filters
     useEffect(() => {
         if (
             debouncedSearch !== filters?.search || 
@@ -51,13 +49,11 @@ export default function Index({ auth, syncLogs, stores, products, can, filters, 
         router.get(`/inventory-sync-logs?${params.toString()}`, {}, { preserveState: true });
     };
     
-    // Function to format dates
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         return new Date(dateString).toLocaleString();
     };
     
-    // Function to get platform icon
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -67,7 +63,6 @@ export default function Index({ auth, syncLogs, stores, products, can, filters, 
         }
     };
     
-    // Function to get sync status badge
     const getSyncStatusBadge = (status) => {
         switch (status?.toLowerCase()) {
             case 'completed':
@@ -97,7 +92,6 @@ export default function Index({ auth, syncLogs, stores, products, can, filters, 
         }
     };
     
-    // Reset all filters
     const resetFilters = () => {
         setSearchParams({
             search: '',

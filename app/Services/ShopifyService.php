@@ -10,15 +10,18 @@ use Illuminate\Support\Str;
 
 class ShopifyService extends ApiService
 {
-    /**
-     * Initialize the Shopify API service
-     */
+
     protected function initializeService(): void
     {
-        // Set the base URL for the Shopify store
-        $this->baseUrl = "https://{$this->storeIntegration->shop_url}/admin/api/2023-07";
+
+        $shopUrl = $this->storeIntegration->shop_url;
         
-        // Set the headers for authentication
+        $shopUrl = preg_replace('#^https?://#', '', $shopUrl);
+        
+        $shopUrl = rtrim($shopUrl, '/');
+        
+        $this->baseUrl = "https://{$shopUrl}/admin/api/2023-07";
+        
         $this->headers = [
             'X-Shopify-Access-Token' => $this->storeIntegration->api_key,
             'Content-Type' => 'application/json',
@@ -26,9 +29,6 @@ class ShopifyService extends ApiService
         ];
     }
     
-    /**
-     * Get all products from the Shopify store
-     */
     public function getAllProducts(int $limit = 50): array
     {
         $response = $this->get('products.json', [
@@ -46,9 +46,7 @@ class ShopifyService extends ApiService
         ];
     }
     
-    /**
-     * Get a single product from the Shopify store
-     */
+    
     public function getProduct(string $productId): array
     {
         $response = $this->get("products/{$productId}.json");
@@ -63,9 +61,6 @@ class ShopifyService extends ApiService
         ];
     }
     
-    /**
-     * Get inventory levels for a product variant
-     */
     public function getInventoryLevels(string $inventoryItemId): array
     {
         $response = $this->get("inventory_levels.json", [
@@ -82,9 +77,7 @@ class ShopifyService extends ApiService
         ];
     }
     
-    /**
-     * Update inventory levels for a product variant
-     */
+
     public function updateInventoryLevel(string $inventoryItemId, string $locationId, int $quantity): array
     {
         $response = $this->post("inventory_levels/set.json", [
@@ -96,22 +89,19 @@ class ShopifyService extends ApiService
         return $response;
     }
     
-    /**
-     * Sync all products from Shopify to the dashboard
-     */
+    
     public function syncProducts(): array
     {
-        // Create a sync log
+
         $syncLog = new InventorySyncLog([
             'store_integration_id' => $this->storeIntegration->id,
             'status' => 'in_progress',
-            'sync_type' => 'full',
+            'sync_type' => 'manual',
             'started_at' => now()
         ]);
         $syncLog->save();
         
         try {
-            // Get products from Shopify
             $response = $this->getAllProducts(250);
             
             if (!$response['success']) {
@@ -135,16 +125,14 @@ class ShopifyService extends ApiService
             $changes = [];
             
             foreach ($shopifyProducts as $shopifyProduct) {
-                // Only process the first variant for now
+                
                 if (empty($shopifyProduct['variants'])) {
                     $productsSkipped++;
                     continue;
                 }
                 
                 $variant = $shopifyProduct['variants'][0];
-                
-                // Check if product already exists
-                $product = Product::where('external_id', $shopifyProduct['id'])
+                $product = Product::where('platform_product_id', $shopifyProduct['id'])
                     ->where('store_integration_id', $this->storeIntegration->id)
                     ->first();
                 
@@ -162,10 +150,10 @@ class ShopifyService extends ApiService
                     'price' => $variant['price'] ?? 0,
                     'cost' => $variant['cost'] ?? 0,
                     'status' => $shopifyProduct['status'] === 'active' ? 'active' : 'inactive',
-                    'image_url' => $imageUrl,
+                    'images' => $imageUrl ? json_encode([$imageUrl]) : null,
                     'variant_id' => $variant['id'] ?? null,
                     'inventory_item_id' => $variant['inventory_item_id'] ?? null,
-                    'last_synced_at' => now()
+                    'last_sync_at' => now()
                 ];
                 
                 if ($product) {
@@ -185,39 +173,39 @@ class ShopifyService extends ApiService
                     if (!empty($changedFields)) {
                         $changes[] = [
                             'product_id' => $product->id,
-                            'external_id' => $shopifyProduct['id'],
+                            'platform_product_id' => $shopifyProduct['id'],
                             'title' => $shopifyProduct['title'],
                             'changes' => $changedFields
                         ];
                         
-                        // Update product
                         $product->update($productData);
                         $productsUpdated++;
                     } else {
                         $productsSkipped++;
                     }
                 } else {
-                    // Create new product
-                    $product = new Product([
-                        'store_integration_id' => $this->storeIntegration->id,
-                        'external_id' => $shopifyProduct['id'],
-                        'external_url' => "https://{$this->storeIntegration->shop_url}/products/{$shopifyProduct['handle']}",
-                        ...$productData
-                    ]);
+                    $createData = array_merge(
+                        [
+                            'store_integration_id' => $this->storeIntegration->id,
+                            'platform_product_id' => $shopifyProduct['id'],
+                            'external_url' => "https://{$this->storeIntegration->shop_url}/products/{$shopifyProduct['handle']}"
+                        ],
+                        $productData
+                    );
+                    $product = new Product($createData);
                     
                     $product->save();
                     $productsCreated++;
                     
                     $changes[] = [
                         'product_id' => $product->id,
-                        'external_id' => $shopifyProduct['id'],
+                        'platform_product_id' => $shopifyProduct['id'],
                         'title' => $shopifyProduct['title'],
                         'changes' => ['new_product' => true]
                     ];
                 }
             }
             
-            // Update sync log
             $syncLog->update([
                 'status' => 'completed',
                 'products_synced' => $productsCreated + $productsUpdated,
@@ -226,7 +214,6 @@ class ShopifyService extends ApiService
                 'completed_at' => now()
             ]);
             
-            // Update store integration
             $this->storeIntegration->update([
                 'last_sync_at' => now(),
                 'products_count' => Product::where('store_integration_id', $this->storeIntegration->id)->count()
@@ -262,22 +249,17 @@ class ShopifyService extends ApiService
         }
     }
     
-    /**
-     * Sync a single product from Shopify to the dashboard
-     */
     public function syncProduct(string $productId): array
     {
-        // Create a sync log
         $syncLog = new InventorySyncLog([
             'store_integration_id' => $this->storeIntegration->id,
             'status' => 'in_progress',
-            'sync_type' => 'single',
+            'sync_type' => 'manual',
             'started_at' => now()
         ]);
         $syncLog->save();
         
         try {
-            // Get product from Shopify
             $response = $this->getProduct($productId);
             
             if (!$response['success']) {
@@ -312,8 +294,7 @@ class ShopifyService extends ApiService
             
             $variant = $shopifyProduct['variants'][0];
             
-            // Find or create product
-            $product = Product::where('external_id', $shopifyProduct['id'])
+            $product = Product::where('platform_product_id', $shopifyProduct['id'])
                 ->where('store_integration_id', $this->storeIntegration->id)
                 ->first();
             
@@ -331,16 +312,15 @@ class ShopifyService extends ApiService
                 'price' => $variant['price'] ?? 0,
                 'cost' => $variant['cost'] ?? 0,
                 'status' => $shopifyProduct['status'] === 'active' ? 'active' : 'inactive',
-                'image_url' => $imageUrl,
+                'images' => $imageUrl ? json_encode([$imageUrl]) : null,
                 'variant_id' => $variant['id'] ?? null,
                 'inventory_item_id' => $variant['inventory_item_id'] ?? null,
-                'last_synced_at' => now()
+                'last_sync_at' => now()
             ];
             
             $changes = [];
             
             if ($product) {
-                // Track changes
                 $oldValues = $product->only(array_keys($productData));
                 $changedFields = [];
                 
@@ -355,29 +335,30 @@ class ShopifyService extends ApiService
                 
                 $changes = [
                     'product_id' => $product->id,
-                    'external_id' => $shopifyProduct['id'],
+                    'platform_product_id' => $shopifyProduct['id'],
                     'title' => $shopifyProduct['title'],
                     'changes' => $changedFields
                 ];
                 
-                // Update product
                 $product->update($productData);
                 
                 $status = 'updated';
             } else {
-                // Create new product
-                $product = new Product([
-                    'store_integration_id' => $this->storeIntegration->id,
-                    'external_id' => $shopifyProduct['id'],
-                    'external_url' => "https://{$this->storeIntegration->shop_url}/products/{$shopifyProduct['handle']}",
-                    ...$productData
-                ]);
+                $createData = array_merge(
+                    [
+                        'store_integration_id' => $this->storeIntegration->id,
+                        'platform_product_id' => $shopifyProduct['id'],
+                        'external_url' => "https://{$this->storeIntegration->shop_url}/products/{$shopifyProduct['handle']}"
+                    ],
+                    $productData
+                );
+                $product = new Product($createData);
                 
                 $product->save();
                 
                 $changes = [
                     'product_id' => $product->id,
-                    'external_id' => $shopifyProduct['id'],
+                    'platform_product_id' => $shopifyProduct['id'],
                     'title' => $shopifyProduct['title'],
                     'changes' => ['new_product' => true]
                 ];
@@ -385,7 +366,6 @@ class ShopifyService extends ApiService
                 $status = 'created';
             }
             
-            // Update sync log
             $syncLog->update([
                 'status' => 'completed',
                 'product_id' => $product->id,
@@ -425,9 +405,6 @@ class ShopifyService extends ApiService
         }
     }
     
-    /**
-     * Push updated inventory from the dashboard to Shopify
-     */
     public function pushInventory(Product $product, int $quantity): array
     {
         if (!$product->inventory_item_id) {
@@ -437,7 +414,6 @@ class ShopifyService extends ApiService
             ];
         }
         
-        // Get inventory levels to find the location ID
         $levelsResponse = $this->getInventoryLevels($product->inventory_item_id);
         
         if (!$levelsResponse['success'] || empty($levelsResponse['data'])) {
@@ -450,7 +426,6 @@ class ShopifyService extends ApiService
         $inventoryLevel = $levelsResponse['data'][0];
         $locationId = $inventoryLevel['location_id'];
         
-        // Update inventory level
         $response = $this->updateInventoryLevel(
             $product->inventory_item_id,
             $locationId,
@@ -458,18 +433,17 @@ class ShopifyService extends ApiService
         );
         
         if ($response['success']) {
-            // Update product in database
+
             $product->update([
                 'quantity' => $quantity,
-                'last_synced_at' => now()
+                'last_sync_at' => now()
             ]);
             
-            // Create sync log
             $syncLog = new InventorySyncLog([
                 'store_integration_id' => $this->storeIntegration->id,
                 'product_id' => $product->id,
                 'status' => 'completed',
-                'sync_type' => 'push',
+                'sync_type' => 'manual',
                 'products_synced' => 1,
                 'started_at' => now(),
                 'completed_at' => now(),
@@ -477,7 +451,7 @@ class ShopifyService extends ApiService
                 'changes' => json_encode([
                     [
                         'product_id' => $product->id,
-                        'external_id' => $product->external_id,
+                        'platform_product_id' => $product->platform_product_id,
                         'title' => $product->title,
                         'changes' => [
                             'quantity' => [

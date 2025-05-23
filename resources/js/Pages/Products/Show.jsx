@@ -7,13 +7,11 @@ export default function Show({ auth, product, flash, can }) {
     const [showSuccessMessage, setShowSuccessMessage] = useState(!!flash?.success);
     const [isSyncing, setIsSyncing] = useState(false);
     
-    // Function to format dates
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         return new Date(dateString).toLocaleString();
     };
     
-    // Platform icon
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -23,7 +21,6 @@ export default function Show({ auth, product, flash, can }) {
         }
     };
     
-    // Function to determine stock level class
     const getStockLevelClass = () => {
         if (product.quantity <= 0) {
             return 'text-red-600 bg-red-100 border-red-300';
@@ -34,7 +31,6 @@ export default function Show({ auth, product, flash, can }) {
         }
     };
     
-    // Function to handle manual product sync
     const handleSync = () => {
         setIsSyncing(true);
         router.post(route('products.sync', product.id), {}, {
@@ -42,7 +38,6 @@ export default function Show({ auth, product, flash, can }) {
         });
     };
     
-    // Function to create stock alert
     const createStockAlert = () => {
         router.post(route('stock-alerts.store'), {
             product_id: product.id,

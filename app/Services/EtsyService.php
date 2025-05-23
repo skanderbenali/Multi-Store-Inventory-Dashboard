@@ -12,18 +12,13 @@ class EtsyService extends ApiService
 {
     protected $oauthToken;
     
-    /**
-     * Initialize the Etsy API service
-     */
+    
     protected function initializeService(): void
     {
-        // Set the base URL for the Etsy API
         $this->baseUrl = "https://openapi.etsy.com/v3";
         
-        // Get OAuth token from credentials
         $this->oauthToken = $this->storeIntegration->api_token;
         
-        // Set the headers for authentication
         $this->headers = [
             'Authorization' => "Bearer {$this->oauthToken}",
             'Content-Type' => 'application/json',
@@ -32,9 +27,7 @@ class EtsyService extends ApiService
         ];
     }
     
-    /**
-     * Get shop information
-     */
+    
     public function getShop(): array
     {
         $shopId = $this->storeIntegration->shop_id;
@@ -49,9 +42,7 @@ class EtsyService extends ApiService
         return $this->get("application/shops/{$shopId}");
     }
     
-    /**
-     * Get all listings from the Etsy shop
-     */
+    
     public function getAllListings(int $limit = 25, int $offset = 0): array
     {
         $shopId = $this->storeIntegration->shop_id;
@@ -80,9 +71,7 @@ class EtsyService extends ApiService
         ];
     }
     
-    /**
-     * Get a single listing from Etsy
-     */
+    
     public function getListing(string $listingId): array
     {
         $response = $this->get("application/listings/{$listingId}", [
@@ -99,9 +88,7 @@ class EtsyService extends ApiService
         ];
     }
     
-    /**
-     * Update the inventory for a listing
-     */
+    
     public function updateInventory(string $listingId, array $products): array
     {
         return $this->put("application/listings/{$listingId}/inventory", [
@@ -109,16 +96,14 @@ class EtsyService extends ApiService
         ]);
     }
     
-    /**
-     * Sync all products from Etsy to the dashboard
-     */
+    
     public function syncProducts(): array
     {
-        // Create a sync log
+        
         $syncLog = new InventorySyncLog([
             'store_integration_id' => $this->storeIntegration->id,
             'status' => 'in_progress',
-            'sync_type' => 'full',
+            'sync_type' => 'manual',
             'started_at' => now()
         ]);
         $syncLog->save();
@@ -129,7 +114,6 @@ class EtsyService extends ApiService
             $limit = 100;
             $hasMore = true;
             
-            // Paginate through all listings
             while ($hasMore) {
                 $response = $this->getAllListings($limit, $offset);
                 
@@ -152,7 +136,6 @@ class EtsyService extends ApiService
                 
                 $allListings = array_merge($allListings, $listings);
                 
-                // Check if there are more listings
                 if (count($listings) < $limit) {
                     $hasMore = false;
                 } else {
@@ -166,17 +149,14 @@ class EtsyService extends ApiService
             $changes = [];
             
             foreach ($allListings as $listing) {
-                // Get the inventory if available
                 $quantity = $listing['quantity'] ?? 0;
                 
-                // Get primary image if available
                 $imageUrl = null;
                 if (!empty($listing['images'])) {
                     $imageUrl = $listing['images'][0]['url_fullxfull'] ?? null;
                 }
                 
-                // Check if product already exists
-                $product = Product::where('external_id', $listing['listing_id'])
+                $product = Product::where('platform_product_id', $listing['listing_id'])
                     ->where('store_integration_id', $this->storeIntegration->id)
                     ->first();
                 
@@ -187,12 +167,11 @@ class EtsyService extends ApiService
                     'quantity' => $quantity,
                     'price' => $listing['price']['amount'] / $listing['price']['divisor'] ?? 0,
                     'status' => $listing['state'] === 'active' ? 'active' : 'inactive',
-                    'image_url' => $imageUrl,
-                    'last_synced_at' => now()
+                    'images' => $imageUrl ? json_encode([$imageUrl]) : null,
+                    'last_sync_at' => now()
                 ];
                 
                 if ($product) {
-                    // Track changes
                     $oldValues = $product->only(array_keys($productData));
                     $changedFields = [];
                     
@@ -208,39 +187,41 @@ class EtsyService extends ApiService
                     if (!empty($changedFields)) {
                         $changes[] = [
                             'product_id' => $product->id,
-                            'external_id' => $listing['listing_id'],
+                            'platform_product_id' => $listing['listing_id'],
                             'title' => $listing['title'],
                             'changes' => $changedFields
                         ];
                         
-                        // Update product
                         $product->update($productData);
                         $productsUpdated++;
                     } else {
                         $productsSkipped++;
                     }
                 } else {
-                    // Create new product
-                    $product = new Product([
-                        'store_integration_id' => $this->storeIntegration->id,
-                        'external_id' => $listing['listing_id'],
-                        'external_url' => $listing['url'] ?? "https://www.etsy.com/listing/{$listing['listing_id']}",
-                        ...$productData
-                    ]);
+                    
+                    $createData = array_merge(
+                        [
+                            'store_integration_id' => $this->storeIntegration->id,
+                            'platform_product_id' => $listing['listing_id'],
+                            'external_url' => $listing['url'] ?? "https://www.etsy.com/listing/{$listing['listing_id']}"
+                        ],
+                        $productData
+                    );
+                    $product = new Product($createData);
                     
                     $product->save();
                     $productsCreated++;
                     
                     $changes[] = [
                         'product_id' => $product->id,
-                        'external_id' => $listing['listing_id'],
+                        'platform_product_id' => $listing['listing_id'],
                         'title' => $listing['title'],
                         'changes' => ['new_product' => true]
                     ];
                 }
             }
             
-            // Update sync log
+            
             $syncLog->update([
                 'status' => 'completed',
                 'products_synced' => $productsCreated + $productsUpdated,
@@ -249,7 +230,7 @@ class EtsyService extends ApiService
                 'completed_at' => now()
             ]);
             
-            // Update store integration
+            
             $this->storeIntegration->update([
                 'last_sync_at' => now(),
                 'products_count' => Product::where('store_integration_id', $this->storeIntegration->id)->count()
@@ -285,22 +266,20 @@ class EtsyService extends ApiService
         }
     }
     
-    /**
-     * Sync a single product from Etsy to the dashboard
-     */
+    
     public function syncProduct(string $listingId): array
     {
-        // Create a sync log
+        
         $syncLog = new InventorySyncLog([
             'store_integration_id' => $this->storeIntegration->id,
             'status' => 'in_progress',
-            'sync_type' => 'single',
+            'sync_type' => 'manual',
             'started_at' => now()
         ]);
         $syncLog->save();
         
         try {
-            // Get product from Etsy
+            
             $response = $this->getListing($listingId);
             
             if (!$response['success']) {
@@ -333,17 +312,17 @@ class EtsyService extends ApiService
                 ];
             }
             
-            // Get the inventory if available
+            
             $quantity = $listing['quantity'] ?? 0;
             
-            // Get primary image if available
+            
             $imageUrl = null;
             if (!empty($listing['images'])) {
                 $imageUrl = $listing['images'][0]['url_fullxfull'] ?? null;
             }
             
-            // Find or create product
-            $product = Product::where('external_id', $listing['listing_id'])
+            
+            $product = Product::where('platform_product_id', $listing['listing_id'])
                 ->where('store_integration_id', $this->storeIntegration->id)
                 ->first();
             
@@ -354,14 +333,14 @@ class EtsyService extends ApiService
                 'quantity' => $quantity,
                 'price' => $listing['price']['amount'] / $listing['price']['divisor'] ?? 0,
                 'status' => $listing['state'] === 'active' ? 'active' : 'inactive',
-                'image_url' => $imageUrl,
-                'last_synced_at' => now()
+                'images' => $imageUrl ? json_encode([$imageUrl]) : null,
+                'last_sync_at' => now()
             ];
             
             $changes = [];
             
             if ($product) {
-                // Track changes
+                
                 $oldValues = $product->only(array_keys($productData));
                 $changedFields = [];
                 
@@ -376,29 +355,32 @@ class EtsyService extends ApiService
                 
                 $changes = [
                     'product_id' => $product->id,
-                    'external_id' => $listing['listing_id'],
+                    'platform_product_id' => $listing['listing_id'],
                     'title' => $listing['title'],
                     'changes' => $changedFields
                 ];
                 
-                // Update product
+                
                 $product->update($productData);
                 
                 $status = 'updated';
             } else {
-                // Create new product
-                $product = new Product([
-                    'store_integration_id' => $this->storeIntegration->id,
-                    'external_id' => $listing['listing_id'],
-                    'external_url' => $listing['url'] ?? "https://www.etsy.com/listing/{$listing['listing_id']}",
-                    ...$productData
-                ]);
+                
+                $createData = array_merge(
+                    [
+                        'store_integration_id' => $this->storeIntegration->id,
+                        'platform_product_id' => $listing['listing_id'],
+                        'external_url' => $listing['url'] ?? "https://www.etsy.com/listing/{$listing['listing_id']}"
+                    ],
+                    $productData
+                );
+                $product = new Product($createData);
                 
                 $product->save();
                 
                 $changes = [
                     'product_id' => $product->id,
-                    'external_id' => $listing['listing_id'],
+                    'platform_product_id' => $listing['listing_id'],
                     'title' => $listing['title'],
                     'changes' => ['new_product' => true]
                 ];
@@ -406,7 +388,6 @@ class EtsyService extends ApiService
                 $status = 'created';
             }
             
-            // Update sync log
             $syncLog->update([
                 'status' => 'completed',
                 'product_id' => $product->id,
@@ -446,24 +427,20 @@ class EtsyService extends ApiService
         }
     }
     
-    /**
-     * Push updated inventory from the dashboard to Etsy
-     */
     public function pushInventory(Product $product, int $quantity): array
     {
-        // Create a sync log
+        
         $syncLog = new InventorySyncLog([
             'store_integration_id' => $this->storeIntegration->id,
             'product_id' => $product->id,
             'status' => 'in_progress',
-            'sync_type' => 'push',
+            'sync_type' => 'manual',
             'started_at' => now()
         ]);
         $syncLog->save();
         
         try {
-            // Get current listing details to ensure we have the correct product data
-            $response = $this->getListing($product->external_id);
+            $response = $this->getListing($product->platform_product_id);
             
             if (!$response['success']) {
                 $syncLog->update([
@@ -495,18 +472,17 @@ class EtsyService extends ApiService
                 ];
             }
             
-            // Extract the products array that needs to be updated
+            
             $products = $listing['inventory']['products'] ?? [];
             
-            // Update the quantity in each product variation
+            
             foreach ($products as &$prod) {
                 foreach ($prod['offerings'] as &$offering) {
                     $offering['quantity'] = $quantity;
                 }
             }
             
-            // Send update to Etsy
-            $updateResponse = $this->updateInventory($product->external_id, $products);
+            $updateResponse = $this->updateInventory($product->platform_product_id, $products);
             
             if (!$updateResponse['success']) {
                 $syncLog->update([
@@ -522,13 +498,13 @@ class EtsyService extends ApiService
                 ];
             }
             
-            // Update product in database
+            
             $product->update([
                 'quantity' => $quantity,
-                'last_synced_at' => now()
+                'last_sync_at' => now()
             ]);
             
-            // Update sync log
+            
             $syncLog->update([
                 'status' => 'completed',
                 'products_synced' => 1,
@@ -536,7 +512,7 @@ class EtsyService extends ApiService
                 'changes' => json_encode([
                     [
                         'product_id' => $product->id,
-                        'external_id' => $product->external_id,
+                        'platform_product_id' => $product->platform_product_id,
                         'title' => $product->title,
                         'changes' => [
                             'quantity' => [

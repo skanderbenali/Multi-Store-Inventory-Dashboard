@@ -49,9 +49,8 @@ export default function Dashboard({ auth, stats, storeIntegrations, recentAlerts
                         />
                     </div>
                     
-                    {/* Two column layout for larger screens */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left column - 2/3 width on large screens */}
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">  
                         <div className="lg:col-span-2 space-y-6">
                             {/* Store Integrations */}
                             <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -166,7 +165,7 @@ export default function Dashboard({ auth, stats, storeIntegrations, recentAlerts
                             </div>
                         </div>
                         
-                        {/* Right column - 1/3 width on large screens */}
+                        {/* Right column */}
                         <div className="space-y-6">
                             {/* Stock Alerts */}
                             <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">

@@ -3,13 +3,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Show({ auth, syncLog }) {
-    // Format date
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         return new Date(dateString).toLocaleString();
     };
-    
-    // Get platform icon
+
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -18,8 +16,7 @@ export default function Show({ auth, syncLog }) {
             default: return '🏪';
         }
     };
-    
-    // Get status badge class
+
     const getStatusBadgeClass = (status) => {
         switch (status?.toLowerCase()) {
             case 'completed':
@@ -32,13 +29,11 @@ export default function Show({ auth, syncLog }) {
                 return 'bg-gray-100 text-gray-800 border-gray-300';
         }
     };
-    
-    // Function to format JSON as readable with syntax highlighting
+
     const formatJSON = (jsonObject) => {
         if (!jsonObject) return 'No data';
         
         try {
-            // If it's a string, parse it
             const obj = typeof jsonObject === 'string' ? JSON.parse(jsonObject) : jsonObject;
             return JSON.stringify(obj, null, 2);
         } catch (e) {

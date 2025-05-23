@@ -17,28 +17,23 @@ export default function Edit({ auth, storeIntegration }) {
         is_active: storeIntegration.is_active,
     });
     
-    // State to track visibility of API secret
     const [showSecret, setShowSecret] = useState(false);
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
     
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
         
         patch(route('store-integrations.update', storeIntegration.id));
     };
     
-    // Handle delete confirmation
     const confirmDeletion = () => {
         setConfirmingDeletion(true);
     };
     
-    // Cancel deletion
     const cancelDeletion = () => {
         setConfirmingDeletion(false);
     };
     
-    // Platform-specific fields
     const renderPlatformFields = () => {
         switch (data.platform) {
             case 'shopify':

@@ -16,7 +16,6 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
     });
     const [debouncedSearch, setDebouncedSearch] = useState(searchParams.search);
     
-    // Debounce search input
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchParams.search);
@@ -25,7 +24,6 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
         return () => clearTimeout(timer);
     }, [searchParams.search]);
     
-    // Apply filters
     useEffect(() => {
         if (
             debouncedSearch !== filters?.search || 
@@ -48,13 +46,11 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
         router.get(`/stock-alerts?${params.toString()}`, {}, { preserveState: true });
     };
     
-    // Format date
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         return new Date(dateString).toLocaleString();
     };
     
-    // Function to get alert status badge
     const getAlertStatusBadge = (alert) => {
         if (!alert.is_active) {
             return (
@@ -79,7 +75,6 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
         );
     };
     
-    // Function to get stock status badge
     const getStockStatusBadge = (alert) => {
         const product = alert.product;
         
@@ -106,14 +101,12 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
         );
     };
     
-    // Function to handle toggle alert status
     const toggleAlertStatus = (alertId, currentStatus) => {
         router.patch(route('stock-alerts.update', alertId), {
             is_active: !currentStatus,
         });
     };
     
-    // Reset all filters
     const resetFilters = () => {
         setSearchParams({
             search: '',

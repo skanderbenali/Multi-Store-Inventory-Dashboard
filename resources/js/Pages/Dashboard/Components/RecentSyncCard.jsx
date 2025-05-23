@@ -2,13 +2,13 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function RecentSyncCard({ sync }) {
-    // Format date
+    
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
         return new Date(dateString).toLocaleString();
     };
     
-    // Get platform icon
+
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -18,7 +18,6 @@ export default function RecentSyncCard({ sync }) {
         }
     };
     
-    // Get sync status badge
     const getSyncStatusBadge = (status) => {
         switch (status?.toLowerCase()) {
             case 'completed':

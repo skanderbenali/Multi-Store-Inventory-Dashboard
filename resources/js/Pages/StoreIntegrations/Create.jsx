@@ -17,10 +17,8 @@ export default function Create({ auth }) {
         is_active: true,
     });
     
-    // State to track visibility of API secret
     const [showSecret, setShowSecret] = useState(false);
     
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
         
@@ -31,7 +29,6 @@ export default function Create({ auth }) {
         });
     };
     
-    // Platform-specific fields
     const renderPlatformFields = () => {
         switch (data.platform) {
             case 'shopify':

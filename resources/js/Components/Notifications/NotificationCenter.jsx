@@ -11,11 +11,9 @@ export default function NotificationCenter() {
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        // Set up Echo listeners when the component mounts
         if (window.Echo && auth.user) {
             const userId = auth.user.id;
 
-            // Listen for stock alerts
             window.Echo.private(`user.${userId}`)
                 .listen('.stock.alert.triggered', (e) => {
                     const notification = {
@@ -32,7 +30,6 @@ export default function NotificationCenter() {
                     showToast(notification);
                 });
 
-            // Listen for sync completed events
             window.Echo.private(`user.${userId}`)
                 .listen('.inventory.sync.completed', (e) => {
                     const notification = {
@@ -51,7 +48,6 @@ export default function NotificationCenter() {
                     showToast(notification);
                 });
 
-            // Clean up the listeners when the component unmounts
             return () => {
                 window.Echo.leave(`user.${userId}`);
             };
@@ -60,11 +56,9 @@ export default function NotificationCenter() {
 
     const addNotification = (notification) => {
         setNotifications(prev => {
-            // Check if notification with same ID already exists
             const exists = prev.some(n => n.id === notification.id);
             if (exists) return prev;
             
-            // Add new notification to the beginning of the list
             return [notification, ...prev];
         });
         
@@ -74,7 +68,6 @@ export default function NotificationCenter() {
     const showToast = (notification) => {
         setNewNotification(notification);
         
-        // Clear the toast after 5 seconds
         setTimeout(() => {
             setNewNotification(null);
         }, 5000);
@@ -96,7 +89,6 @@ export default function NotificationCenter() {
             )
         );
         
-        // Update unread count
         setUnreadCount(prev => Math.max(0, prev - 1));
     };
 
@@ -106,7 +98,6 @@ export default function NotificationCenter() {
 
     return (
         <div className="relative">
-            {/* Notification Bell */}
             <button 
                 className="relative p-1 text-gray-700 hover:text-indigo-600 focus:outline-none"
                 onClick={toggleNotifications}
@@ -125,7 +116,6 @@ export default function NotificationCenter() {
                     />
                 </svg>
                 
-                {/* Unread Badge */}
                 {unreadCount > 0 && (
                     <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -133,7 +123,6 @@ export default function NotificationCenter() {
                 )}
             </button>
             
-            {/* Notification Dropdown */}
             {showNotifications && (
                 <div className="absolute right-0 z-50 mt-2 w-80 bg-white rounded-lg shadow-xl overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
@@ -170,7 +159,6 @@ export default function NotificationCenter() {
                 </div>
             )}
             
-            {/* Toast Notification */}
             {newNotification && (
                 <NotificationToast
                     notification={newNotification}

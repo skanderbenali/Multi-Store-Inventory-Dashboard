@@ -60,7 +60,7 @@ class StockAlertTriggered implements ShouldBroadcast
                 'title' => $product->title,
                 'sku' => $product->sku,
                 'quantity' => $product->quantity,
-                'image_url' => $product->image_url,
+                'image_url' => $product->images ? json_decode($product->images)[0] ?? null : null,
             ],
             'threshold' => $this->stockAlert->threshold,
             'triggered_at' => $this->stockAlert->triggered_at,

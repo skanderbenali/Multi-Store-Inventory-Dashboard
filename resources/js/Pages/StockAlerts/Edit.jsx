@@ -17,25 +17,21 @@ export default function Edit({ auth, alert, can }) {
     
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
     
-    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
         patch(route('stock-alerts.update', alert.id));
     };
     
-    // Handle reset triggered status
     const resetTriggeredStatus = () => {
         if (confirm('Are you sure you want to reset the triggered status? This will re-enable the alert if it was triggered.')) {
             router.post(route('stock-alerts.reset', alert.id));
         }
     };
     
-    // Handle deletion
     const confirmDeletion = () => {
         setConfirmingDeletion(true);
     };
     
-    // Delete alert
     const deleteAlert = () => {
         router.delete(route('stock-alerts.destroy', alert.id));
     };

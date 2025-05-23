@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function StatisticCard({ title, value, icon, color, linkTo }) {
-    // Define color classes based on the color prop
     const colorClasses = {
         blue: {
             bg: 'bg-blue-100',
@@ -36,10 +35,8 @@ export default function StatisticCard({ title, value, icon, color, linkTo }) {
         },
     };
     
-    // Use gray as fallback if color is not defined
     const classes = colorClasses[color] || colorClasses.gray;
     
-    // Icon mapping
     const iconSvg = {
         box: (
             <svg className={`h-8 w-8 ${classes.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

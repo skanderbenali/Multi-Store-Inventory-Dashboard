@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function ProductStatusChart({ inStock, lowStock, outOfStock }) {
-    // Create refs for the chart canvas and container
     const canvasRef = useRef(null);
     
     // Calculate total for percentages
@@ -13,7 +12,6 @@ export default function ProductStatusChart({ inStock, lowStock, outOfStock }) {
     const lowStockPercent = total > 0 ? Math.round((lowStock / total) * 100) : 0;
     const outOfStockPercent = total > 0 ? Math.round((outOfStock / total) * 100) : 0;
     
-    // Draw donut chart using native canvas API
     useEffect(() => {
         // Skip if there's no data
         if (total === 0) return;
@@ -25,22 +23,20 @@ export default function ProductStatusChart({ inStock, lowStock, outOfStock }) {
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
         const radius = Math.min(centerX, centerY) * 0.8;
-        const innerRadius = radius * 0.6; // Inner radius for donut
+        const innerRadius = radius * 0.6;
         
-        // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Define colors
+        
         const colors = {
-            inStock: '#10B981', // Green for in stock
-            lowStock: '#F59E0B', // Yellow for low stock
-            outOfStock: '#EF4444', // Red for out of stock
+            inStock: '#10B981', 
+            lowStock: '#F59E0B', 
+            outOfStock: '#EF4444',
         };
         
         // Draw segments
-        let startAngle = -0.5 * Math.PI; // Start at top (12 o'clock)
+        let startAngle = -0.5 * Math.PI; 
         
-        // Draw in stock segment
         if (inStock > 0) {
             const sliceAngle = (inStock / total) * 2 * Math.PI;
             ctx.beginPath();

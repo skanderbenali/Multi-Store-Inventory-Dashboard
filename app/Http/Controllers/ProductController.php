@@ -12,37 +12,25 @@ use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Inertia\Response
-     */
+  
     public function index(Request $request)
     {
         $this->authorize('view products');
-        
-        // Get integrations the user has access to
         $integrationIds = Auth::user()->hasRole('admin')
             ? StoreIntegration::pluck('id')
             : Auth::user()->storeIntegrations()->pluck('id');
             
-        // Base query for products the user has access to
         $query = Product::with('storeIntegration')
             ->whereIn('store_integration_id', $integrationIds);
         
-        // Apply filters if provided
         if ($request->has('filter')) {
-            // Filter by integration ID
             if ($request->filled('filter.integration')) {
                 $integrationId = $request->input('filter.integration');
-                // Verify user has access to this integration
                 if (in_array($integrationId, $integrationIds->toArray())) {
                     $query->where('store_integration_id', $integrationId);
                 }
             }
             
-            // Filter by stock level
             if ($request->filled('filter.stock_level')) {
                 switch ($request->input('filter.stock_level')) {
                     case 'low':
@@ -54,13 +42,11 @@ class ProductController extends Controller
                 }
             }
             
-            // Filter by SKU
             if ($request->filled('filter.sku')) {
                 $query->where('sku', 'like', '%' . $request->input('filter.sku') . '%');
             }
         }
         
-        // Search by keyword if provided
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($query) use ($search) {
@@ -70,16 +56,11 @@ class ProductController extends Controller
             });
         }
         
-        // Paginate the results
         $products = $query->latest('last_sync_at')->paginate(10)
             ->appends($request->query());
-        
-        // Get store integrations for filtering
         $integrations = StoreIntegration::whereIn('id', $integrationIds)
             ->select('id', 'name', 'platform')
             ->get();
-        
-        // Get sync suggestions (products out of stock in one store but available in others)
         $syncSuggestions = [];
         
         if (Auth::user()->can('sync products')) {
@@ -109,16 +90,10 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Inertia\Response
-     */
+   
     public function create()
     {
         $this->authorize('create products');
-        
-        // Get store integrations the user has access to
         $integrations = Auth::user()->hasRole('admin')
             ? StoreIntegration::select('id', 'name', 'platform')->get()
             : Auth::user()->storeIntegrations()->select('id', 'name', 'platform')->get();
@@ -128,12 +103,7 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    
     public function store(Request $request)
     {
         $this->authorize('create products');
@@ -152,14 +122,11 @@ class ProductController extends Controller
             'additional_data' => 'nullable|array',
         ]);
         
-        // Verify user has access to this integration
         $integration = StoreIntegration::findOrFail($validated['store_integration_id']);
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
-        
-        // Check if product with this SKU already exists for this integration
         $existingProduct = Product::where('sku', $validated['sku'])
             ->where('store_integration_id', $validated['store_integration_id'])
             ->first();
@@ -168,44 +135,27 @@ class ProductController extends Controller
             return redirect()->back()
                 ->withErrors(['sku' => 'A product with this SKU already exists for this store.']);
         }
-        
-        // Set last sync time
         $validated['last_sync_at'] = now();
-        
-        // Create the product
         $product = Product::create($validated);
         
         return redirect()->route('products.show', $product)
             ->with('success', 'Product created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Inertia\Response
-     */
+    
     public function show(Product $product)
     {
         $this->authorize('view products');
-        
-        // Check if user has access to this product's integration
         $integration = $product->storeIntegration;
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
-        
-        // Load store integration and alerts
         $product->load(['storeIntegration', 'stockAlerts']);
-        
-        // Find similar products (same SKU) in other stores
         $similarProducts = Product::where('sku', $product->sku)
             ->where('id', '!=', $product->id)
             ->with('storeIntegration:id,name,platform')
             ->get();
-        
-        // Get sync logs for this product
         $syncLogs = $product->syncLogs()->latest()->take(5)->get();
         
         return Inertia::render('Products/Show', [
@@ -220,17 +170,10 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Inertia\Response
-     */
+    
     public function edit(Product $product)
     {
         $this->authorize('edit products');
-        
-        // Check if user has access to this product's integration
         $integration = $product->storeIntegration;
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
@@ -243,18 +186,10 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    
     public function update(Request $request, Product $product)
     {
         $this->authorize('edit products');
-        
-        // Check if user has access to this product's integration
         $integration = $product->storeIntegration;
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
@@ -273,8 +208,6 @@ class ProductController extends Controller
             'variants' => 'nullable|array',
             'additional_data' => 'nullable|array',
         ]);
-        
-        // Check if changing SKU would conflict with another product
         if ($validated['sku'] !== $product->sku) {
             $existingProduct = Product::where('sku', $validated['sku'])
                 ->where('store_integration_id', $product->store_integration_id)
@@ -293,17 +226,10 @@ class ProductController extends Controller
             ->with('success', 'Product updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    
     public function destroy(Product $product)
     {
         $this->authorize('delete products');
-        
-        // Check if user has access to this product's integration
         $integration = $product->storeIntegration;
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
@@ -316,19 +242,10 @@ class ProductController extends Controller
             ->with('success', 'Product deleted successfully.');
     }
     
-    /**
-     * Update stock quantity for a product.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @param  \App\Services\InventorySyncService  $syncService
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    
     public function updateStock(Request $request, Product $product, InventorySyncService $syncService)
     {
         $this->authorize('edit products');
-        
-        // Check if user has access to this product's integration
         $integration = $product->storeIntegration;
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
@@ -352,10 +269,8 @@ class ProductController extends Controller
                     ->with('error', 'Failed to update inventory on platform: ' . ($result['error'] ?? 'Unknown error'));
             }
             
-            // Product quantity is already updated by the sync service
             $message = 'Stock updated and synced with platform successfully.';
         } else {
-            // Just update the local product quantity
             $product->update([
                 'quantity' => $quantity,
                 'last_sync_at' => now(),
@@ -363,39 +278,26 @@ class ProductController extends Controller
             
             $message = 'Stock updated successfully.';
         }
-        
-        // Check for stock alerts
         $syncService->checkProductStockAlerts($product);
         
         return redirect()->back()
             ->with('success', $message);
     }
     
-    /**
-     * Sync a single product with its platform.
-     *
-     * @param  \App\Models\Product  $product
-     * @param  \App\Services\InventorySyncService  $syncService
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    
     public function syncProduct(Product $product, InventorySyncService $syncService)
     {
         $this->authorize('sync products');
-        
-        // Check if user has access to this product's integration
         $integration = $product->storeIntegration;
         
         if (!Auth::user()->hasRole('admin') && $integration->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
-        
-        // Check if integration is active
         if (!$integration->is_active) {
             return redirect()->back()
                 ->with('error', 'Cannot sync product: Store integration is not active.');
         }
         
-        // Perform the sync
         $result = $syncService->syncProduct($product);
         
         if ($result['success']) {
@@ -407,3 +309,4 @@ class ProductController extends Controller
         }
     }
 }
+

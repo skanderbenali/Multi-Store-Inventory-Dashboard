@@ -2,7 +2,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 
-// Component for statistic cards
 const StatCard = ({ title, value, icon, color, linkTo, linkText }) => {
     return (
         <div className={`bg-white p-6 rounded-lg shadow-md border-l-4 ${color}`}>
@@ -24,7 +23,6 @@ const StatCard = ({ title, value, icon, color, linkTo, linkText }) => {
     );
 };
 
-// Component for store platform cards
 const StoreCard = ({ name, platform, productsCount, lastSync, linkTo }) => {
     const getPlatformIcon = (platform) => {
         switch (platform.toLowerCase()) {
@@ -67,7 +65,6 @@ const StoreCard = ({ name, platform, productsCount, lastSync, linkTo }) => {
     );
 };
 
-// Component for alert items
 const AlertItem = ({ product, threshold, status, createdAt, linkTo }) => {
     const getStatusBadge = (status) => {
         switch (status.toLowerCase()) {

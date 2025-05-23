@@ -16,7 +16,6 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
     });
     const [debouncedSearch, setDebouncedSearch] = useState(searchParams.search);
     
-    // Debounce search input
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchParams.search);
@@ -25,7 +24,6 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
         return () => clearTimeout(timer);
     }, [searchParams.search]);
     
-    // Apply filters
     useEffect(() => {
         if (
             debouncedSearch !== filters?.search || 
@@ -48,7 +46,6 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
         router.get(`/products?${params.toString()}`, {}, { preserveState: true });
     };
     
-    // Function to handle stock status display
     const getStockStatus = (product) => {
         if (product.quantity <= 0) {
             return (
@@ -71,7 +68,6 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
         }
     };
     
-    // Function to get platform icon
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';
@@ -81,7 +77,6 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
         }
     };
     
-    // Reset all filters
     const resetFilters = () => {
         setSearchParams({
             search: '',

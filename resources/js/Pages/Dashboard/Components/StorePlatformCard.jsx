@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function StorePlatformCard({ integration }) {
-    // Platform-specific styling
     const getPlatformIcon = (platform) => {
         switch (platform?.toLowerCase()) {
             case 'shopify': return '🛍️';

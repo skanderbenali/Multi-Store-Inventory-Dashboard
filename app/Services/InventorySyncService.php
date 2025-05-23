@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class InventorySyncService
 {
-    /**
-     * Create a platform-specific API service
-     */
+    
     public function createPlatformService(StoreIntegration $storeIntegration): ?ApiService
     {
         switch (strtolower($storeIntegration->platform)) {
@@ -34,20 +32,15 @@ class InventorySyncService
         }
     }
     
-    /**
-     * Sync all products for a store integration
-     */
+    
     public function syncAllProducts(StoreIntegration $storeIntegration): array
     {
-        // Check if integration is active
         if (!$storeIntegration->is_active) {
             return [
                 'success' => false,
                 'error' => 'Store integration is not active'
             ];
         }
-        
-        // Get the platform service
         $service = $this->createPlatformService($storeIntegration);
         
         if (!$service) {
@@ -57,13 +50,11 @@ class InventorySyncService
             ];
         }
         
-        // Perform the sync
-        $result = $service->syncProducts();
         
-        // Check for active stock alerts after sync
+        $result = $service->syncProducts();
         if ($result['success']) {
             $this->checkStockAlerts($storeIntegration);
-            
+    
             // Broadcast sync completed event if we have a sync log ID
             if (isset($result['data']['sync_log_id'])) {
                 $syncLog = InventorySyncLog::find($result['data']['sync_log_id']);
@@ -76,22 +67,16 @@ class InventorySyncService
         return $result;
     }
     
-    /**
-     * Sync a single product
-     */
+    
     public function syncProduct(Product $product): array
     {
         $storeIntegration = $product->storeIntegration;
-        
-        // Check if integration is active
         if (!$storeIntegration->is_active) {
             return [
                 'success' => false,
                 'error' => 'Store integration is not active'
             ];
         }
-        
-        // Get the platform service
         $service = $this->createPlatformService($storeIntegration);
         
         if (!$service) {
@@ -101,14 +86,10 @@ class InventorySyncService
             ];
         }
         
-        // Perform the sync
-        $result = $service->syncProduct($product->external_id);
-        
-        // Check stock alerts for this product after sync
+        $result = $service->syncProduct($product->platform_product_id);
         if ($result['success']) {
             $this->checkProductStockAlerts($product);
             
-            // Broadcast sync completed event if we have a sync log ID
             if (isset($result['data']['sync_log_id'])) {
                 $syncLog = InventorySyncLog::find($result['data']['sync_log_id']);
                 if ($syncLog) {
@@ -120,22 +101,16 @@ class InventorySyncService
         return $result;
     }
     
-    /**
-     * Push inventory update to the platform
-     */
+
     public function pushInventoryUpdate(Product $product, int $quantity): array
     {
         $storeIntegration = $product->storeIntegration;
-        
-        // Check if integration is active
         if (!$storeIntegration->is_active) {
             return [
                 'success' => false,
                 'error' => 'Store integration is not active'
             ];
         }
-        
-        // Get the platform service
         $service = $this->createPlatformService($storeIntegration);
         
         if (!$service) {
@@ -145,14 +120,10 @@ class InventorySyncService
             ];
         }
         
-        // Perform the inventory update
         $result = $service->pushInventory($product, $quantity);
-        
-        // Check stock alerts for this product after update
         if ($result['success']) {
             $this->checkProductStockAlerts($product);
             
-            // Broadcast sync completed event if we have a sync log ID
             if (isset($result['data']['sync_log_id'])) {
                 $syncLog = InventorySyncLog::find($result['data']['sync_log_id']);
                 if ($syncLog) {
@@ -164,9 +135,7 @@ class InventorySyncService
         return $result;
     }
     
-    /**
-     * Check stock alerts for all products in a store integration
-     */
+    
     public function checkStockAlerts(StoreIntegration $storeIntegration): void
     {
         $products = Product::where('store_integration_id', $storeIntegration->id)->get();
@@ -176,9 +145,6 @@ class InventorySyncService
         }
     }
     
-    /**
-     * Check and trigger stock alerts for a specific product
-     */
     public function checkProductStockAlerts(Product $product): void
     {
         $alerts = StockAlert::where('product_id', $product->id)
@@ -187,20 +153,15 @@ class InventorySyncService
             ->get();
         
         foreach ($alerts as $alert) {
-            // Check if quantity is at or below threshold
             if ($product->quantity <= $alert->threshold) {
-                // Trigger the alert
+                
                 $alert->update([
                     'triggered_at' => now()
                 ]);
                 
-                // Reload the alert with related data
                 $alert->load(['product.storeIntegration', 'user']);
-                
-                // Broadcast the alert event
                 event(new StockAlertTriggered($alert));
                 
-                // Send the notification via the notification system
                 if ($alert->user) {
                     $alert->user->notify(new \App\Notifications\StockAlertNotification($alert));
                 }
@@ -216,9 +177,7 @@ class InventorySyncService
         }
     }
     
-    /**
-     * Sync all active store integrations
-     */
+    
     public function syncAllStores(): array
     {
         $integrations = StoreIntegration::where('is_active', true)->get();
@@ -234,9 +193,6 @@ class InventorySyncService
         ];
     }
     
-    /**
-     * Reset a triggered stock alert
-     */
     public function resetStockAlert(StockAlert $alert): bool
     {
         return $alert->update([
@@ -244,15 +200,9 @@ class InventorySyncService
         ]);
     }
     
-    /**
-     * Get sync recommendations for store integrations
-     * (e.g., stores that haven't been synced in a while)
-     */
     public function getSyncRecommendations(): array
     {
         $recommendations = [];
-        
-        // Find integrations that haven't been synced in 24 hours
         $outdatedIntegrations = StoreIntegration::where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('last_sync_at')
@@ -269,13 +219,11 @@ class InventorySyncService
                 'reason' => 'Not synced in the last 24 hours'
             ];
         }
-        
-        // Find products with mismatched inventory
-        $potentialMismatches = Product::whereNotNull('last_synced_at')
+        $potentialMismatches = Product::whereNotNull('last_sync_at')
             ->whereHas('storeIntegration', function ($query) {
                 $query->where('is_active', true);
             })
-            ->where('last_synced_at', '<', now()->subHours(12))
+            ->where('last_sync_at', '<', now()->subHours(12))
             ->whereHas('stockAlerts', function ($query) {
                 $query->where('is_active', true)
                     ->whereNotNull('triggered_at');
@@ -288,7 +236,7 @@ class InventorySyncService
                 'title' => $product->title,
                 'store_integration_id' => $product->store_integration_id,
                 'store_name' => $product->storeIntegration->name,
-                'last_sync_at' => $product->last_synced_at,
+                'last_sync_at' => $product->last_sync_at,
                 'reason' => 'Product has triggered alerts and may need inventory verification'
             ];
         }
@@ -296,3 +244,4 @@ class InventorySyncService
         return $recommendations;
     }
 }
+
