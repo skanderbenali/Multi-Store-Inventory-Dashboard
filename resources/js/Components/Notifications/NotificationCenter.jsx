@@ -99,7 +99,7 @@ export default function NotificationCenter() {
     return (
         <div className="relative">
             <button 
-                className="relative p-1 text-gray-700 hover:text-indigo-600 focus:outline-none"
+                className="relative p-1 text-white hover:text-white/80 focus:outline-none"
                 onClick={toggleNotifications}
             >
                 <svg 

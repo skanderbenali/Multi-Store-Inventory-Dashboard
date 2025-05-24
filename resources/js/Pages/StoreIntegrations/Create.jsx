@@ -15,6 +15,7 @@ export default function Create({ auth }) {
         api_key: '',
         api_secret: '',
         is_active: true,
+        auto_sync: true, // Default to auto-sync enabled
     });
     
     const [showSecret, setShowSecret] = useState(false);
@@ -75,7 +76,6 @@ export default function Create({ auth }) {
                                     value={data.api_secret}
                                     className="mt-1 block w-full pr-10"
                                     onChange={(e) => setData('api_secret', e.target.value)}
-                                    required
                                 />
                                 <button
                                     type="button"
@@ -94,6 +94,7 @@ export default function Create({ auth }) {
                                     )}
                                 </button>
                             </div>
+                            <p className="mt-1 text-sm text-gray-500">This field is optional and can be added later if needed.</p>
                             <InputError message={errors.api_secret} className="mt-2" />
                         </div>
                     </>
@@ -142,7 +143,6 @@ export default function Create({ auth }) {
                                     value={data.api_secret}
                                     className="mt-1 block w-full pr-10"
                                     onChange={(e) => setData('api_secret', e.target.value)}
-                                    required
                                 />
                                 <button
                                     type="button"
@@ -161,6 +161,7 @@ export default function Create({ auth }) {
                                     )}
                                 </button>
                             </div>
+                            <p className="mt-1 text-sm text-gray-500">This field is optional and can be added later if needed.</p>
                             <InputError message={errors.api_secret} className="mt-2" />
                         </div>
                     </>
@@ -209,7 +210,6 @@ export default function Create({ auth }) {
                                     value={data.api_secret}
                                     className="mt-1 block w-full pr-10"
                                     onChange={(e) => setData('api_secret', e.target.value)}
-                                    required
                                 />
                                 <button
                                     type="button"
@@ -228,6 +228,7 @@ export default function Create({ auth }) {
                                     )}
                                 </button>
                             </div>
+                            <p className="mt-1 text-sm text-gray-500">This field is optional and can be added later if needed.</p>
                             <InputError message={errors.api_secret} className="mt-2" />
                         </div>
                     </>
@@ -293,25 +294,47 @@ export default function Create({ auth }) {
                                 {renderPlatformFields()}
                                 
                                 <div className="mb-4">
-                                    <label className="flex items-center">
-                                        <input 
-                                            type="checkbox" 
+                                    <div className="flex items-center">
+                                        <input
+                                            id="is_active"
+                                            type="checkbox"
                                             name="is_active"
                                             checked={data.is_active}
                                             onChange={(e) => setData('is_active', e.target.checked)}
                                             className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                         />
-                                        <span className="ml-2 text-sm text-gray-600">Active</span>
-                                    </label>
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        Inactive integrations will not sync data automatically.
+                                        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                                            Active
+                                        </label>
+                                    </div>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Inactive integrations will not sync inventory automatically.
+                                    </p>
+                                </div>
+                                
+                                <div className="mb-4">
+                                    <div className="flex items-center">
+                                        <input
+                                            id="auto_sync"
+                                            type="checkbox"
+                                            name="auto_sync"
+                                            checked={data.auto_sync}
+                                            onChange={(e) => setData('auto_sync', e.target.checked)}
+                                            className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                        />
+                                        <label htmlFor="auto_sync" className="ml-2 block text-sm text-gray-900">
+                                            Run initial sync immediately
+                                        </label>
+                                    </div>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Start syncing products from this store right after creation.
                                     </p>
                                 </div>
                                 
                                 <div className="flex items-center justify-end mt-8 space-x-4">
                                     <Link
                                         href={route('store-integrations.index')}
-                                        className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        className="text-sm text-indigo-600 hover:text-indigo-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                     >
                                         Cancel
                                     </Link>

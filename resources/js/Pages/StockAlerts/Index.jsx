@@ -8,14 +8,41 @@ import Pagination from '@/Components/Pagination';
 
 export default function Index({ auth, alerts, products, can, filters, flash }) {
     const [showSuccessMessage, setShowSuccessMessage] = useState(!!flash?.success);
+    
+    // Initialize local state from URL filters but only once on component mount
     const [searchParams, setSearchParams] = useState({
         search: filters?.search || '',
         product: filters?.product || '',
         status: filters?.status || '',
         sort: filters?.sort || 'newest',
     });
+    
+    // Track if this is the initial render to prevent immediate filter application
+    const [isInitialRender, setIsInitialRender] = useState(true);
+    
+    // Debounced search implementation
     const [debouncedSearch, setDebouncedSearch] = useState(searchParams.search);
     
+    // Helper function to parse product image from JSON string
+    const parseProductImage = (product) => {
+        if (!product || !product.images) return null;
+        
+        try {
+            // Check if it's already an array
+            if (Array.isArray(product.images)) {
+                return product.images.length > 0 ? product.images[0] : null;
+            }
+            
+            // Try to parse from JSON string
+            const imagesArray = JSON.parse(product.images);
+            return imagesArray.length > 0 ? imagesArray[0] : null;
+        } catch (e) {
+            console.error('Error parsing images for product:', product.id, e);
+            return null;
+        }
+    };
+    
+    // Handle search input debouncing
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchParams.search);
@@ -24,18 +51,14 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
         return () => clearTimeout(timer);
     }, [searchParams.search]);
     
+    // Handle filter application, but skip on initial render
     useEffect(() => {
-        if (
-            debouncedSearch !== filters?.search || 
-            searchParams.product !== filters?.product || 
-            searchParams.status !== filters?.status || 
-            searchParams.sort !== filters?.sort
-        ) {
-            applyFilters();
+        // Skip the filter application on the first render
+        if (isInitialRender) {
+            setIsInitialRender(false);
+            return;
         }
-    }, [debouncedSearch, searchParams.product, searchParams.status, searchParams.sort]);
-    
-    const applyFilters = () => {
+        
         const params = new URLSearchParams();
         
         if (debouncedSearch) params.append('search', debouncedSearch);
@@ -44,7 +67,7 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
         if (searchParams.sort) params.append('sort', searchParams.sort);
         
         router.get(`/stock-alerts?${params.toString()}`, {}, { preserveState: true });
-    };
+    }, [debouncedSearch, searchParams.product, searchParams.status, searchParams.sort]);
     
     const formatDate = (dateString) => {
         if (!dateString) return 'Never';
@@ -114,6 +137,7 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
             status: '',
             sort: 'newest',
         });
+        // We don't need to call applyFilters manually, the useEffect will handle it
     };
 
     return (
@@ -288,7 +312,7 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                                                     Product
                                                 </th>
                                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -312,12 +336,12 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
                                             {alerts.data.map((alert) => (
                                                 <tr key={alert.id}>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center">
-                                                            {alert.product.image_url ? (
+                                                        <div className="flex items-center max-w-md">
+                                                            {parseProductImage(alert.product) ? (
                                                                 <div className="flex-shrink-0 h-10 w-10">
                                                                     <img 
                                                                         className="h-10 w-10 rounded-md object-cover" 
-                                                                        src={alert.product.image_url} 
+                                                                        src={parseProductImage(alert.product)} 
                                                                         alt={alert.product.title} 
                                                                     />
                                                                 </div>
@@ -328,13 +352,14 @@ export default function Index({ auth, alerts, products, can, filters, flash }) {
                                                                     </svg>
                                                                 </div>
                                                             )}
-                                                            <div className="ml-4">
-                                                                <div className="text-sm font-medium text-gray-900">
+                                                            <div className="ml-4 min-w-0 flex-1">
+                                                                <div className="text-sm font-medium text-gray-900 truncate">
                                                                     <Link 
                                                                         href={route('products.show', alert.product.id)} 
                                                                         className="hover:text-indigo-600"
+                                                                        title={alert.product.title} // Add title for tooltip on hover
                                                                     >
-                                                                        {alert.product.title}
+                                                                        {alert.product.title.length > 50 ? `${alert.product.title.substring(0, 50)}...` : alert.product.title}
                                                                     </Link>
                                                                 </div>
                                                                 <div className="text-sm text-gray-500">

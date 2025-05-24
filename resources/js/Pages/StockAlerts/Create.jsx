@@ -6,14 +6,32 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 
-export default function Create({ auth, products, preselectedProduct = null }) {
+export default function Create({ auth, products, preselectedProduct = null, notificationMethods }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         product_id: preselectedProduct || '',
         threshold: '',
         is_active: true,
-        notification_email: true,
-        notification_dashboard: true,
+        notification_method: 'email',
     });
+    
+    // Helper function to parse product image
+    const parseProductImage = (product) => {
+        if (!product || !product.images) return null;
+        
+        try {
+            // Check if it's already an array
+            if (Array.isArray(product.images)) {
+                return product.images.length > 0 ? product.images[0] : null;
+            }
+            
+            // Try to parse from JSON string
+            const imagesArray = JSON.parse(product.images);
+            return imagesArray.length > 0 ? imagesArray[0] : null;
+        } catch (e) {
+            console.error('Error parsing images for product:', product.id, e);
+            return null;
+        }
+    };
     
     const [selectedProduct, setSelectedProduct] = useState(null);
     
@@ -23,8 +41,19 @@ export default function Create({ auth, products, preselectedProduct = null }) {
             setSelectedProduct(product);
             
             if (product && !data.threshold) {
-                // Default threshold is 70% of current quantity or 5, whichever is lower
-                const defaultThreshold = Math.min(Math.floor(product.quantity * 0.7), 5);
+                // Set default threshold to product's low_stock_threshold if available
+                // Otherwise use 70% of current quantity or 5, whichever is lower
+                let defaultThreshold;
+                
+                if (product.low_stock_threshold) {
+                    // Use existing threshold as a starting point
+                    defaultThreshold = product.low_stock_threshold;
+                } else {
+                    // Calculate a sensible default
+                    defaultThreshold = Math.min(Math.floor(product.quantity * 0.7), 5);
+                }
+                
+                // Ensure threshold is at least 1
                 setData('threshold', defaultThreshold > 0 ? defaultThreshold : 1);
             }
         } else {
@@ -38,6 +67,7 @@ export default function Create({ auth, products, preselectedProduct = null }) {
             onSuccess: () => {
                 reset();
             },
+            preserveScroll: true,
         });
     };
     
@@ -76,22 +106,56 @@ export default function Create({ auth, products, preselectedProduct = null }) {
                                         
                                         <div className="mb-6">
                                             <InputLabel htmlFor="product_id" value="Product" />
+                                            <div className="relative">
+                                                <select
+                                                    id="product_id"
+                                                    name="product_id"
+                                                    value={data.product_id}
+                                                    className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-ellipsis pr-10"
+                                                    onChange={(e) => setData('product_id', e.target.value)}
+                                                    required
+                                                    style={{ maxWidth: '100%' }}
+                                                >
+                                                    <option value="">Select a product</option>
+                                                    {products.map((product) => {
+                                                        // Truncate long titles for better display
+                                                        const truncatedTitle = product.title.length > 50 
+                                                            ? product.title.substring(0, 50) + '...' 
+                                                            : product.title;
+                                                            
+                                                        return (
+                                                            <option key={product.id} value={product.id} title={product.title}>
+                                                                {truncatedTitle} {product.sku ? `(${product.sku})` : ''}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <InputError message={errors.product_id} className="mt-2" />
+                                        </div>
+                                        
+                                        <div className="mb-6">
+                                            <InputLabel htmlFor="notification_method" value="Notification Method" />
                                             <select
-                                                id="product_id"
-                                                name="product_id"
-                                                value={data.product_id}
+                                                id="notification_method"
+                                                name="notification_method"
+                                                value={data.notification_method}
                                                 className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                                onChange={(e) => setData('product_id', e.target.value)}
+                                                onChange={(e) => setData('notification_method', e.target.value)}
                                                 required
                                             >
-                                                <option value="">Select a product</option>
-                                                {products.map((product) => (
-                                                    <option key={product.id} value={product.id}>
-                                                        {product.title} {product.sku ? `(${product.sku})` : ''}
+                                                {notificationMethods.map((method) => (
+                                                    <option key={method.value} value={method.value}>
+                                                        {method.label}
                                                     </option>
                                                 ))}
                                             </select>
-                                            <InputError message={errors.product_id} className="mt-2" />
+                                            <InputError message={errors.notification_method} className="mt-2" />
                                         </div>
                                         
                                         <div className="mb-6">
@@ -110,35 +174,6 @@ export default function Create({ auth, products, preselectedProduct = null }) {
                                                 You will be alerted when the product's stock falls below this threshold.
                                             </p>
                                             <InputError message={errors.threshold} className="mt-2" />
-                                        </div>
-                                        
-                                        <div className="mb-6">
-                                            <h4 className="text-sm font-medium text-gray-700 mb-2">Notification Methods</h4>
-                                            
-                                            <div className="space-y-2">
-                                                <label className="flex items-center">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        name="notification_email"
-                                                        checked={data.notification_email}
-                                                        onChange={(e) => setData('notification_email', e.target.checked)}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-600">Email Notification</span>
-                                                </label>
-                                                
-                                                <label className="flex items-center">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        name="notification_dashboard"
-                                                        checked={data.notification_dashboard}
-                                                        onChange={(e) => setData('notification_dashboard', e.target.checked)}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-600">Dashboard Notification</span>
-                                                </label>
-                                            </div>
-                                            <InputError message={errors.notification_methods} className="mt-2" />
                                         </div>
                                         
                                         <div className="mb-6">
@@ -181,11 +216,11 @@ export default function Create({ auth, products, preselectedProduct = null }) {
                                         <h3 className="text-lg font-medium text-gray-900 mb-4">Selected Product</h3>
                                         
                                         <div className="flex items-center mb-4">
-                                            {selectedProduct.image_url ? (
+                                            {parseProductImage(selectedProduct) ? (
                                                 <div className="flex-shrink-0 h-16 w-16">
                                                     <img 
                                                         className="h-16 w-16 rounded-md object-cover" 
-                                                        src={selectedProduct.image_url} 
+                                                        src={parseProductImage(selectedProduct)} 
                                                         alt={selectedProduct.title} 
                                                     />
                                                 </div>

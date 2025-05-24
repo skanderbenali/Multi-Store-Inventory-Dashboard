@@ -7,19 +7,42 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 
-export default function Edit({ auth, alert, can }) {
+export default function Edit({ auth, alert, products, notificationMethods, can }) {
     const { data, setData, patch, processing, errors } = useForm({
         threshold: alert.threshold || '',
         is_active: alert.is_active,
-        notification_email: alert.notification_email,
-        notification_dashboard: alert.notification_dashboard,
+        notification_method: alert.notification_method || 'email',
     });
+    
+    // Helper function to parse product image
+    const parseProductImage = (product) => {
+        if (!product || !product.images) return null;
+        
+        try {
+            // Check if it's already an array
+            if (Array.isArray(product.images)) {
+                return product.images.length > 0 ? product.images[0] : null;
+            }
+            
+            // Try to parse from JSON string
+            const imagesArray = JSON.parse(product.images);
+            return imagesArray.length > 0 ? imagesArray[0] : null;
+        } catch (e) {
+            console.error('Error parsing images for product:', product.id, e);
+            return null;
+        }
+    };
     
     const [confirmingDeletion, setConfirmingDeletion] = useState(false);
     
     const handleSubmit = (e) => {
         e.preventDefault();
-        patch(route('stock-alerts.update', alert.id));
+        patch(route('stock-alerts.update', alert.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Flash message is handled by the controller
+            },
+        });
     };
     
     const resetTriggeredStatus = () => {
@@ -88,32 +111,22 @@ export default function Edit({ auth, alert, can }) {
                                         </div>
                                         
                                         <div className="mb-6">
-                                            <h4 className="text-sm font-medium text-gray-700 mb-2">Notification Methods</h4>
-                                            
-                                            <div className="space-y-2">
-                                                <label className="flex items-center">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        name="notification_email"
-                                                        checked={data.notification_email}
-                                                        onChange={(e) => setData('notification_email', e.target.checked)}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-600">Email Notification</span>
-                                                </label>
-                                                
-                                                <label className="flex items-center">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        name="notification_dashboard"
-                                                        checked={data.notification_dashboard}
-                                                        onChange={(e) => setData('notification_dashboard', e.target.checked)}
-                                                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-600">Dashboard Notification</span>
-                                                </label>
-                                            </div>
-                                            <InputError message={errors.notification_methods} className="mt-2" />
+                                            <InputLabel htmlFor="notification_method" value="Notification Method" />
+                                            <select
+                                                id="notification_method"
+                                                name="notification_method"
+                                                value={data.notification_method}
+                                                className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                onChange={(e) => setData('notification_method', e.target.value)}
+                                                required
+                                            >
+                                                {notificationMethods.map((method) => (
+                                                    <option key={method.value} value={method.value}>
+                                                        {method.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError message={errors.notification_method} className="mt-2" />
                                         </div>
                                         
                                         <div className="mb-6">
@@ -229,11 +242,11 @@ export default function Edit({ auth, alert, can }) {
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Product Information</h3>
                                     
                                     <div className="flex items-center mb-4">
-                                        {alert.product.image_url ? (
+                                        {parseProductImage(alert.product) ? (
                                             <div className="flex-shrink-0 h-16 w-16">
                                                 <img 
                                                     className="h-16 w-16 rounded-md object-cover" 
-                                                    src={alert.product.image_url} 
+                                                    src={parseProductImage(alert.product)} 
                                                     alt={alert.product.title} 
                                                 />
                                             </div>

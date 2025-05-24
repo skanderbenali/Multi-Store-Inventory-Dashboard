@@ -317,7 +317,7 @@ export default function Edit({ auth, storeIntegration }) {
                                 <div className="flex items-center justify-end mt-8 space-x-4">
                                     <Link
                                         href={route('store-integrations.show', storeIntegration.id)}
-                                        className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        className="text-sm text-indigo-600 hover:text-indigo-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                     >
                                         Cancel
                                     </Link>

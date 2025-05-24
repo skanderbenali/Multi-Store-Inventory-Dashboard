@@ -120,10 +120,10 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                     </Transition>
                     
                     {/* Action buttons */}
-                    <div className="flex justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row justify-between mb-6 gap-4">
                         <Link 
                             href={route('store-integrations.index')} 
-                            className="text-gray-600 hover:text-gray-900 flex items-center"
+                            className="text-indigo-600 hover:text-indigo-700 flex items-center transition-colors"
                         >
                             <svg className="w-5 h-5 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                                 <path d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
@@ -131,11 +131,11 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                             Back to Integrations
                         </Link>
                         
-                        <div className="flex space-x-3">
+                        <div className="flex flex-wrap gap-3">
                             {can.edit_integration && (
                                 <Link
                                     href={route('store-integrations.edit', storeIntegration.id)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md shadow-sm flex items-center"
+                                    className="bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 py-2 px-3 sm:px-4 rounded-md shadow-sm flex items-center transition-all font-medium whitespace-nowrap text-sm sm:text-base"
                                 >
                                     <svg className="w-5 h-5 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                                         <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -149,12 +149,12 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                                     onClick={handleSync}
                                     disabled={syncInProgress}
                                     className={`${
-                                        syncInProgress ? "bg-green-500" : "bg-green-600 hover:bg-green-700"
-                                    } text-white py-2 px-4 rounded-md shadow-sm flex items-center`}
+                                        syncInProgress ? "bg-green-50 text-green-700 border-green-300" : "bg-white border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+                                    } border py-2 px-3 sm:px-4 rounded-md shadow-sm flex items-center transition-all font-medium whitespace-nowrap text-sm sm:text-base`}
                                 >
                                     {syncInProgress ? (
                                         <>
-                                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -174,7 +174,7 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                             {can.delete_integration && (
                                 <button
                                     onClick={handleDelete}
-                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md shadow-sm flex items-center"
+                                    className="bg-white border border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 py-2 px-3 sm:px-4 rounded-md shadow-sm flex items-center transition-all font-medium whitespace-nowrap text-sm sm:text-base"
                                 >
                                     <svg className="w-5 h-5 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                                         <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -346,31 +346,32 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                                     </div>
                                     
                                     {storeIntegration.products && storeIntegration.products.length > 0 ? (
-                                        <div className="overflow-hidden">
-                                            <table className="w-full table-fixed divide-y divide-gray-200">
+                                         <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                            {/* Desktop Table View */}
+                                            <table className="w-full divide-y divide-gray-200 hidden md:table">
                                                 <thead className="bg-gray-50">
                                                     <tr>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-5/12">
+                                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Product
                                                         </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">
+                                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             SKU
                                                         </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
+                                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Stock
                                                         </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/12">
+                                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Last Sync
                                                         </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">
+                                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Actions
                                                         </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
                                                     {storeIntegration.products.map((product) => (
-                                                        <tr key={product.id}>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                        <tr key={product.id} className="hover:bg-gray-50">
+                                                            <td className="px-4 py-4">
                                                                 <div className="flex items-center">
                                                                     {parseProductImage(product) ? (
                                                                         <div className="flex-shrink-0 h-10 w-10">
@@ -384,16 +385,16 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                                                                         </div>
                                                                     )}
                                                                     <div className="ml-4">
-                                                                        <div className="text-sm font-medium text-gray-900 truncate" style={{ maxWidth: '250px' }} title={product.title}>
+                                                                        <div className="text-sm font-medium text-gray-900 truncate max-w-[200px] md:max-w-[250px]" title={product.title}>
                                                                             {product.title.length > 40 ? product.title.substring(0, 40) + '...' : product.title}
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                            <td className="px-4 py-4">
                                                                 <div className="text-sm text-gray-500">{product.sku}</div>
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                            <td className="px-4 py-4">
                                                                 {product.quantity <= 0 ? (
                                                                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                                                         Out of stock
@@ -408,18 +409,86 @@ export default function Show({ auth, storeIntegration, lastSync, flash, can }) {
                                                                     </span>
                                                                 )}
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            <td className="px-4 py-4 text-sm">
                                                                 {formatDate(product.last_sync_at)}
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                                <Link href={route('products.show', product.id)} className="text-indigo-600 hover:text-indigo-900">
-                                                                    View
+                                                            <td className="px-4 py-4 text-right text-sm font-medium">
+                                                                <Link
+                                                                    href={route('products.show', product.id)}
+                                                                    className="text-indigo-600 hover:text-indigo-700 flex items-center justify-end"
+                                                                >
+                                                                    View 
+                                                                    <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                                                    </svg>
                                                                 </Link>
                                                             </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
+                                            
+                                            {/* Mobile Card View */}
+                                            <div className="md:hidden space-y-4 divide-y divide-gray-200">
+                                                {storeIntegration.products.map((product) => (
+                                                    <div key={product.id} className="p-4 bg-white">
+                                                        <div className="flex items-center mb-3">
+                                                            {parseProductImage(product) ? (
+                                                                <div className="flex-shrink-0 h-12 w-12 mr-3">
+                                                                    <img className="h-12 w-12 rounded-md object-cover" src={parseProductImage(product)} alt={product.title} />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex-shrink-0 h-12 w-12 mr-3 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+                                                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex-1">
+                                                                <h4 className="text-sm font-medium text-gray-900 truncate">{product.title.length > 40 ? product.title.substring(0, 40) + '...' : product.title}</h4>
+                                                                <p className="text-xs text-gray-500">SKU: {product.sku || 'N/A'}</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                                                            <div>
+                                                                <p className="text-xs text-gray-500 font-medium">Stock</p>
+                                                                <div className="mt-1">
+                                                                    {product.quantity <= 0 ? (
+                                                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                                            Out of stock
+                                                                        </span>
+                                                                    ) : product.quantity <= product.low_stock_threshold ? (
+                                                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                                            Low stock ({product.quantity})
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                                            In stock ({product.quantity})
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-gray-500 font-medium">Last Sync</p>
+                                                                <p className="text-xs mt-1">{formatDate(product.last_sync_at)}</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+                                                            <Link
+                                                                href={route('products.show', product.id)}
+                                                                className="text-indigo-600 hover:text-indigo-700 text-xs font-medium flex items-center"
+                                                            >
+                                                                View Details
+                                                                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                                                </svg>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="text-center p-8 border-2 border-dashed border-gray-300 rounded-lg">

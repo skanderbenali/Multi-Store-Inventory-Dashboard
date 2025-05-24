@@ -297,34 +297,35 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                     ) : (
                         <>
                             <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                                <div className="overflow-hidden">
-                                    <table className="w-full table-fixed divide-y divide-gray-200">
+                                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                    {/* Desktop Table View */}
+                                    <table className="w-full divide-y divide-gray-200 hidden md:table">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-4/12">
+                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Product
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
+                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Store
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">
+                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     SKU
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
+                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Stock
                                                 </th>
-                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">
+                                                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Last Updated
                                                 </th>
-                                                <th scope="col" className="relative px-6 py-3 w-1/12">
+                                                <th scope="col" className="relative px-4 py-3">
                                                     <span className="sr-only">Actions</span>
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {products?.data && products.data.map((product) => (
-                                                <tr key={product.id}>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                <tr key={product.id} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-4">
                                                         <div className="flex items-center">
                                                             {parseProductImage(product) ? (
                                                                 <div className="flex-shrink-0 h-10 w-10">
@@ -338,10 +339,10 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                                                                 </div>
                                                             )}
                                                             <div className="ml-4">
-                                                                <div className="text-sm font-medium text-gray-900 truncate" style={{ maxWidth: '250px' }} title={product.title}>
+                                                                <div className="text-sm font-medium text-gray-900 truncate max-w-[200px] md:max-w-[250px]" title={product.title}>
                                                                     {product.title.length > 40 ? product.title.substring(0, 40) + '...' : product.title}
                                                                 </div>
-                                                                <div className="text-sm text-gray-500 truncate" style={{ maxWidth: '250px' }}>
+                                                                <div className="text-sm text-gray-500 truncate max-w-[200px] md:max-w-[250px]">
                                                                     {product.description ? (
                                                                         product.description.length > 50 
                                                                             ? product.description.substring(0, 50) + '...'
@@ -351,38 +352,44 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-4 py-4">
                                                         <div className="flex items-center">
                                                             <span className="text-lg mr-2">{getPlatformIcon(product.store_integration?.platform)}</span>
                                                             <div className="text-sm text-gray-900">{product.store_integration?.name || 'Unknown'}</div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-4 py-4">
                                                         <div className="text-sm text-gray-900">{product.sku || 'N/A'}</div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-4 py-4">
                                                         {getStockStatus(product)}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-4 py-4 text-sm">
                                                         {product.last_sync_at 
                                                             ? new Date(product.last_sync_at).toLocaleString() 
                                                             : 'Never'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <td className="px-4 py-4 text-right text-sm font-medium">
                                                         <div className="flex space-x-3 justify-end">
                                                             <Link
                                                                 href={route('products.show', product.id)}
-                                                                className="text-indigo-600 hover:text-indigo-900"
+                                                                className="text-indigo-600 hover:text-indigo-700 flex items-center"
                                                             >
                                                                 View
+                                                                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                                                </svg>
                                                             </Link>
                                                             
                                                             {can.edit_products && (
                                                                 <Link
                                                                     href={route('products.edit', product.id)}
-                                                                    className="text-blue-600 hover:text-blue-900"
+                                                                    className="text-indigo-600 hover:text-indigo-700 flex items-center"
                                                                 >
                                                                     Edit
+                                                                    <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                                    </svg>
                                                                 </Link>
                                                             )}
                                                         </div>
@@ -391,6 +398,89 @@ export default function Index({ auth, products, stores, can, filters, flash }) {
                                             ))}
                                         </tbody>
                                     </table>
+                                    
+                                    {/* Mobile Card View */}
+                                    <div className="md:hidden space-y-4 divide-y divide-gray-200">
+                                        {products?.data && products.data.map((product) => (
+                                            <div key={product.id} className="p-4 bg-white">
+                                                <div className="flex items-center mb-3">
+                                                    {parseProductImage(product) ? (
+                                                        <div className="flex-shrink-0 h-14 w-14 mr-3">
+                                                            <img className="h-14 w-14 rounded-md object-cover" src={parseProductImage(product)} alt={product.title} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex-shrink-0 h-14 w-14 mr-3 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+                                                            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1">
+                                                        <h4 className="text-sm font-medium text-gray-900 truncate">{product.title.length > 40 ? product.title.substring(0, 40) + '...' : product.title}</h4>
+                                                        <p className="text-xs text-gray-500 truncate">
+                                                            {product.description ? (
+                                                                product.description.length > 50 
+                                                                    ? product.description.substring(0, 50) + '...'
+                                                                    : product.description
+                                                            ) : 'No description'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 font-medium">Store</p>
+                                                        <div className="flex items-center mt-1">
+                                                            <span className="text-base mr-1">{getPlatformIcon(product.store_integration?.platform)}</span>
+                                                            <span className="text-xs">{product.store_integration?.name || 'Unknown'}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 font-medium">SKU</p>
+                                                        <p className="text-xs mt-1">{product.sku || 'N/A'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 font-medium">Stock</p>
+                                                        <div className="mt-1">
+                                                            {getStockStatus(product)}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 font-medium">Last Updated</p>
+                                                        <p className="text-xs mt-1">
+                                                            {product.last_sync_at 
+                                                                ? new Date(product.last_sync_at).toLocaleString() 
+                                                                : 'Never'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end space-x-3">
+                                                    <Link
+                                                        href={route('products.show', product.id)}
+                                                        className="text-indigo-600 hover:text-indigo-700 text-xs font-medium flex items-center"
+                                                    >
+                                                        View
+                                                        <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                                        </svg>
+                                                    </Link>
+                                                    
+                                                    {can.edit_products && (
+                                                        <Link
+                                                            href={route('products.edit', product.id)}
+                                                            className="text-indigo-600 hover:text-indigo-700 text-xs font-medium flex items-center"
+                                                        >
+                                                            Edit
+                                                            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                            </svg>
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                             

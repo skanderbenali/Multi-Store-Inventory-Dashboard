@@ -40,7 +40,7 @@ class StoreIntegrationController extends Controller
     }
 
    
-    public function store(Request $request)
+    public function store(Request $request, InventorySyncService $syncService)
     {
         $this->authorize('create store integrations');
         
@@ -57,12 +57,24 @@ class StoreIntegrationController extends Controller
             'is_active' => 'boolean',
         ]);
         
+        // Get the auto_sync parameter (not part of the model, so not in $validated)
+        $autoSync = $request->input('auto_sync', false);
         
         $validated['user_id'] = Auth::id();
-        StoreIntegration::create($validated);
+        $storeIntegration = StoreIntegration::create($validated);
+        
+        $syncMessage = '';
+        if ($autoSync && $storeIntegration->is_active) {
+            // Dispatch a job to run the sync in the background to avoid blocking the response
+            dispatch(function() use ($syncService, $storeIntegration) {
+                $syncService->syncAllProducts($storeIntegration);
+            })->afterResponse();
+            
+            $syncMessage = ' Initial product sync has been started in the background.';
+        }
         
         return redirect()->route('store-integrations.index')
-            ->with('success', 'Store integration created successfully.');
+            ->with('success', 'Store integration created successfully.' . $syncMessage);
     }
 
     

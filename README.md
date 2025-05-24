@@ -21,6 +21,7 @@ Multi-Store Inventory Dashboard is a comprehensive solution for managing product
 
 ### Inventory Management
 - **Cross-Platform Synchronization**: Keep inventory levels synchronized across all your e-commerce platforms
+- **Auto-Sync on Integration**: Automatically start syncing products when adding a new store integration
 - **Individual Product Management**: View and update product details across all connected stores
 - **Batch Operations**: Perform bulk updates and synchronization across multiple products
 
@@ -100,20 +101,29 @@ Multi-Store Inventory Dashboard is a comprehensive solution for managing product
    AMAZON_CLIENT_SECRET=your_amazon_client_secret
    ```
 
-7. **Run migrations**
+7. **Run database migrations**
    ```bash
-   php artisan migrate
+   php artisan migrate --seed
    ```
 
-8. **Install NPM dependencies and build assets**
+8. **Install frontend dependencies and build assets**
    ```bash
    npm install
    npm run dev
    ```
 
-9. **Start the local development server**
+9. **Start the development server**
    ```bash
    php artisan serve
+   ```
+
+10. **Set up the scheduler for auto-sync functionality**
+   ```bash
+   # Add this to your server's crontab
+   * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+   
+   # For local development, run in a separate terminal:
+   php artisan schedule:work
    ```
 
 ## Usage
@@ -142,6 +152,16 @@ Multi-Store Inventory Dashboard is a comprehensive solution for managing product
 - View recent synchronization activities
 - Monitor stock alerts
 - See platform-specific metrics
+
+## Documentation
+
+Detailed documentation is available in the `/docs` folder of this repository:
+
+- [Shopify Integration](./docs/shopify.md): Setup and usage guide for Shopify stores
+- [Sync Jobs](./docs/sync-jobs.md): Details on synchronization processes and scheduler configuration
+- [Notifications](./docs/NOTIFICATIONS.md): Information about the notification system
+
+Refer to these documents for platform-specific details and advanced configuration options.
 
 ## Schedule Configuration
 

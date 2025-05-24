@@ -50,6 +50,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $managerRole->givePermissionTo([
             'view dashboard',
             'view store integrations',
+            'create store integrations',
+            'edit store integrations',
             'view products',
             'edit products',
             'sync products',
